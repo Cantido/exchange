@@ -1,4 +1,5 @@
 defmodule Exchange.Orderbook.OrderPlaced do
+  @derive Jason.Encoder
   @enforce_keys [
     :order_id,
     :type,

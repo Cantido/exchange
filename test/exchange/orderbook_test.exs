@@ -7,7 +7,16 @@ defmodule OrderbookTest do
   alias Exchange.Orderbook.OrderExpired
   alias Exchange.Orderbook.TradeExecuted
   require Logger
+  import Commanded.Assertions.EventAssertions
   doctest Exchange.Orderbook
+
+  test "open orderbook" do
+    :ok = Exchange.Commanded.dispatch(%Exchange.Orderbook.OpenOrderbook{symbol: "BTCUSDT"})
+
+    assert_receive_event(Exchange.Commanded, Exchange.Orderbook.OrderbookOpened, fn event ->
+      assert event.symbol == "BTCUSDT"
+    end)
+  end
 
   property "good-til-cancelled limit orders match everything available and then go on the books" do
     check all price <- integer(1..100),
@@ -41,7 +50,7 @@ defmodule OrderbookTest do
           quantity: wanted_quantity
         }
 
-      {ob, _} = apply_commands(Orderbook.new(), first_command)
+      {ob, _} = apply_commands(Orderbook.new("BTCUSDT"), first_command)
       {_, events} = apply_commands(ob, second_command)
 
       assert Enum.count(events) == 2
@@ -108,7 +117,7 @@ defmodule OrderbookTest do
           quantity: wanted_quantity
         }
 
-      {ob, _} = apply_commands(Orderbook.new(), first_command)
+      {ob, _} = apply_commands(Orderbook.new("BTCUSDT"), first_command)
       {ob, events} = apply_commands(ob, second_command)
 
       assert Enum.count(events) == 2
@@ -184,7 +193,7 @@ defmodule OrderbookTest do
           quantity: wanted_quantity
         }
 
-      {ob, _} = apply_commands(Orderbook.new(), first_command)
+      {ob, _} = apply_commands(Orderbook.new("BTCUSDT"), first_command)
       {_, events} = apply_commands(ob, second_command)
 
       assert Enum.count(events) == 2
@@ -244,7 +253,7 @@ defmodule OrderbookTest do
           quantity: wanted_quantity
         }
 
-      {ob, _} = apply_commands(Orderbook.new(), first_command)
+      {ob, _} = apply_commands(Orderbook.new("BTCUSDT"), first_command)
       {ob, events} = apply_commands(ob, second_command)
 
       assert Enum.count(events) == 3, "events were #{inspect events}"
@@ -317,7 +326,7 @@ defmodule OrderbookTest do
           quantity: wanted_quantity
         }
 
-      {ob, _} = apply_commands(Orderbook.new(), first_command)
+      {ob, _} = apply_commands(Orderbook.new("BTCUSDT"), first_command)
       {ob, events} = apply_commands(ob, second_command)
 
       assert Enum.count(events) == 3, "events were #{inspect events}"
@@ -371,7 +380,7 @@ defmodule OrderbookTest do
           quantity: wanted_quantity
         }
 
-      {ob, events} = apply_commands(Orderbook.new(), order)
+      {ob, events} = apply_commands(Orderbook.new("BTCUSDT"), order)
 
       assert Enum.count(events) == 2, "events were #{inspect events}"
       [placed, expired] = events
@@ -425,7 +434,7 @@ defmodule OrderbookTest do
       }
 
 
-    {ob, _} = apply_commands(Orderbook.new(), higher_buy)
+    {ob, _} = apply_commands(Orderbook.new("BTCUSDT"), higher_buy)
     {ob, _} = apply_commands(ob, lower_buy)
     {_ob, events} = apply_commands(ob, market_sell)
 
@@ -477,7 +486,7 @@ defmodule OrderbookTest do
       }
 
 
-    {ob, _} = apply_commands(Orderbook.new(), lower_sell)
+    {ob, _} = apply_commands(Orderbook.new("BTCUSDT"), lower_sell)
     {ob, _} = apply_commands(ob, higher_sell)
     {_ob, events} = apply_commands(ob, market_buy)
 
@@ -539,7 +548,7 @@ defmodule OrderbookTest do
         quantity: unrelated_quantity
       }
 
-    {ob, _} = apply_commands(Orderbook.new(), stop_limit_sell)
+    {ob, _} = apply_commands(Orderbook.new("BTCUSDT"), stop_limit_sell)
     {ob, _} = apply_commands(ob, remaining_buy)
     {ob, _} = apply_commands(ob, first_buy)
     {_ob, events} = apply_commands(ob, first_sell)
@@ -597,7 +606,7 @@ defmodule OrderbookTest do
         quantity: unrelated_quantity
       }
 
-    {ob, _} = apply_commands(Orderbook.new(), take_profit_sell)
+    {ob, _} = apply_commands(Orderbook.new("BTCUSDT"), take_profit_sell)
     {ob, _} = apply_commands(ob, remaining_buy)
     {ob, _} = apply_commands(ob, first_buy)
     {_ob, events} = apply_commands(ob, first_sell)

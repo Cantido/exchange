@@ -2,20 +2,25 @@ defmodule Exchange.Orderbook do
   @moduledoc """
   Documentation for `Orderbook`.
   """
-  alias Exchange.Orderbook.TradeExecuted
   alias Exchange.Orderbook.PlaceOrder
+  alias Exchange.Orderbook.OpenOrderbook
+  alias Exchange.Orderbook.OrderbookOpened
   alias Exchange.Orderbook.OrderPlaced
   alias Exchange.Orderbook.OrderExpired
+  alias Exchange.Orderbook.TradeExecuted
 
   defstruct [
+    symbol: nil,
     sell_orders: %{},
     buy_orders: %{},
     stop_loss_orders: %{},
     take_profit_orders: %{}
   ]
 
-  def new do
-    %__MODULE__{}
+  def new(symbol) do
+    %__MODULE__{
+      symbol: symbol
+    }
   end
 
   defp validate_place_order_command(
@@ -60,6 +65,10 @@ defmodule Exchange.Orderbook do
 
   defp validate_place_order_command(_command) do
     {:error, :invalid_order}
+  end
+
+  def execute(%__MODULE__{symbol: nil}, %OpenOrderbook{symbol: symbol}) do
+    [%OrderbookOpened{symbol: symbol}]
   end
 
   def execute(_ob, %PlaceOrder{type: :stop_loss} = command) do
@@ -205,6 +214,10 @@ defmodule Exchange.Orderbook do
   end
 
   # State Mutators
+
+  def apply(ob, %OrderbookOpened{symbol: symbol}) do
+    %{ob | symbol: symbol}
+  end
 
   def apply(ob, %OrderPlaced{type: :stop_loss} = order) do
     new_order = %{order_id: order.order_id, side: order.side, type: :stop_loss, stop_price: order.stop_price, quantity: order.quantity}

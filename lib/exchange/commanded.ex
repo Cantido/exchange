@@ -4,4 +4,6 @@ defmodule Exchange.Commanded do
     adapter: Application.fetch_env!(:commanded, :event_store_adapter),
     event_store: Exchange.EventStore
   ]
+
+  router Exchange.Router
 end

@@ -13,6 +13,7 @@ defmodule Exchange.Application do
       ExchangeWeb.Telemetry,
       # Start the PubSub system
       {Phoenix.PubSub, name: Exchange.PubSub},
+      Exchange.Commanded,
       # Start the Endpoint (http/https)
       ExchangeWeb.Endpoint
       # Start a worker by calling: Exchange.Worker.start_link(arg)

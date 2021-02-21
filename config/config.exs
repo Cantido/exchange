@@ -8,7 +8,8 @@
 use Mix.Config
 
 config :exchange,
-  ecto_repos: [Exchange.Repo]
+  ecto_repos: [Exchange.Repo],
+  event_stores: [Exchange.EventStore]
 
 # Configures the endpoint
 config :exchange, ExchangeWeb.Endpoint,

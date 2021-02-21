@@ -33,6 +33,8 @@ defmodule Exchange.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:commanded, "~> 1.2"},
+      {:commanded_eventstore_adapter, "~> 1.2"},
       {:ecto_sql, "~> 3.4"},
       {:floki, ">= 0.27.0", only: :test},
       {:gettext, "~> 0.11"},
@@ -43,10 +45,10 @@ defmodule Exchange.MixProject do
       {:phoenix_html, "~> 2.11"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_dashboard, "~> 0.4"},
-      {:plug_cowboy, "~> 2.0"}
+      {:plug_cowboy, "~> 2.0"},
       {:postgrex, ">= 0.0.0"},
       {:telemetry_metrics, "~> 0.4"},
-      {:telemetry_poller, "~> 0.4"},
+      {:telemetry_poller, "~> 0.4"}
     ]
   end
 

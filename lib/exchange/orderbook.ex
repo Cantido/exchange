@@ -2,19 +2,19 @@ defmodule Exchange.Orderbook do
   @moduledoc """
   Documentation for `Orderbook`.
   """
+  alias Exchange.Orderbook.Order
   alias Exchange.Orderbook.PlaceOrder
   alias Exchange.Orderbook.OpenOrderbook
   alias Exchange.Orderbook.OrderbookOpened
   alias Exchange.Orderbook.OrderPlaced
   alias Exchange.Orderbook.OrderExpired
   alias Exchange.Orderbook.TradeExecuted
+  alias Commanded.Aggregate.Multi
 
   defstruct [
     symbol: nil,
-    sell_orders: %{},
-    buy_orders: %{},
-    stop_loss_orders: %{},
-    take_profit_orders: %{}
+    orders: %{},
+    last_trade_price: nil
   ]
 
   def new(symbol) do
@@ -68,99 +68,85 @@ defmodule Exchange.Orderbook do
   end
 
   def execute(%__MODULE__{symbol: nil}, %OpenOrderbook{symbol: symbol}) do
-    [%OrderbookOpened{symbol: symbol}]
+    %OrderbookOpened{symbol: symbol}
   end
 
-  def execute(_ob, %PlaceOrder{type: :stop_loss} = command) do
+  def execute(%__MODULE__{}, %OpenOrderbook{}) do
+    {:error, :orderbook_already_open}
+  end
+
+  def execute(ob, %PlaceOrder{type: :stop_loss} = command) do
     with :ok <- validate_place_order_command(command) do
-      [OrderPlaced.from_command(command)]
+      OrderPlaced.from_command(command, ob.symbol)
     end
   end
 
-  def execute(_ob, %PlaceOrder{type: :take_profit} = command) do
+  def execute(ob, %PlaceOrder{type: :take_profit} = command) do
     with :ok <- validate_place_order_command(command) do
-      [OrderPlaced.from_command(command)]
+      OrderPlaced.from_command(command, ob.symbol)
     end
   end
 
   def execute(ob, %PlaceOrder{} = command) do
     with :ok <- validate_place_order_command(command) do
-      order_placed = OrderPlaced.from_command(command)
-
-      first_order_events = execute_order(ob, command)
-      events = execute_stop_losses(ob, first_order_events)
-      events = execute_take_profits(ob, events)
-
-      [order_placed | events]
+      ob
+      |> Multi.new()
+      |> Multi.execute(&place_order(&1, command))
+      |> Multi.execute(&execute_order(&1, command))
+      |> Multi.execute(&trigger_stop_orders(&1))
     end
   end
 
-  defp execute_stop_losses(ob, events, previously_executed_orders \\ %{}, past_events \\ []) do
-    if Enum.any?(events) do
-      executed_orders =
-        Enum.filter(ob.stop_loss_orders, fn {id, slo} ->
-          Enum.any?(events, fn event ->
-            event.__struct__ == TradeExecuted and
-              event.price <= slo.stop_price and
-              not Map.has_key?(previously_executed_orders, id)
-          end)
-        end)
-        |> Map.new()
-
-      more_events =
-        Enum.flat_map(executed_orders, fn {_id, stop} ->
-          execute_order(ob, stop)
-        end)
-
-      execute_stop_losses(ob, more_events, Map.merge(executed_orders, previously_executed_orders), past_events ++ events)
-    else
-      past_events
-    end
+  defp place_order(ob, command) do
+    OrderPlaced.from_command(command, ob.symbol)
   end
 
-  defp execute_take_profits(ob, events, previously_executed_orders \\ %{}, past_events \\ []) do
-    if Enum.any?(events) do
-      executed_orders =
-        Enum.filter(ob.take_profit_orders, fn {id, tpo} ->
-          Enum.any?(events, fn event ->
-            event.__struct__ == TradeExecuted and
-              event.price >= tpo.stop_price and
-              not Map.has_key?(previously_executed_orders, id)
-          end)
-        end)
-        |> Map.new()
+  defp trigger_stop_orders(ob) do
+    stop_limit_orders_to_execute =
+      Enum.filter(ob.orders, fn {_id, order} ->
+        order.type == :stop_loss and ob.last_trade_price <= order.stop_price
+      end)
+      |> Map.new()
 
-      more_events =
-        Enum.flat_map(executed_orders, fn {_id, stop} ->
-          execute_order(ob, stop)
-        end)
+    stop_limit_order_events =
+      Enum.flat_map(stop_limit_orders_to_execute, fn {_id, stop} ->
+        execute_order(ob, stop)
+      end)
 
-      execute_stop_losses(ob, more_events, Map.merge(executed_orders, previously_executed_orders), past_events ++ events)
-    else
-      past_events
-    end
+    take_profit_orders_to_execute =
+      Enum.filter(ob.orders, fn {_id, order} ->
+        order.type == :take_profit and ob.last_trade_price >= order.stop_price
+      end)
+      |> Map.new()
+
+    take_profit_events =
+      Enum.flat_map(take_profit_orders_to_execute, fn {_id, stop} ->
+        execute_order(ob, stop)
+      end)
+
+    stop_limit_order_events ++ take_profit_events
   end
 
   defp execute_order(ob, command) do
-    orders_to_filter =
-      case command.side do
-        :sell -> ob.buy_orders
-        :buy -> ob.sell_orders
-      end
-
     sort_order =
       case command.side do
         :sell -> :desc
         :buy -> :asc
       end
 
+    opposite_side =
+      case command.side do
+        :sell -> :buy
+        :buy -> :sell
+      end
+
+    orders_to_match = Map.values(ob.orders) |> Enum.filter(& &1.side == opposite_side)
+
     matching_orders =
       if command.type in [:market, :stop_loss, :take_profit] do
-        Map.values(orders_to_filter)
-        |> Enum.sort_by(& &1.price, sort_order)
+        Enum.sort_by(orders_to_match, & &1.price, sort_order)
       else
-        Map.values(orders_to_filter)
-        |> Enum.filter(fn order ->
+        Enum.filter(orders_to_match, fn order ->
           order.price == command.price
         end)
       end
@@ -171,6 +157,7 @@ defmodule Exchange.Orderbook do
           case command.side do
             :sell ->
               %TradeExecuted{
+                symbol: ob.symbol,
                 sell_order_id: command.order_id,
                 buy_order_id: order.order_id,
                 price: order.price,
@@ -179,6 +166,7 @@ defmodule Exchange.Orderbook do
               }
             :buy ->
               %TradeExecuted{
+                symbol: ob.symbol,
                 sell_order_id: order.order_id,
                 buy_order_id: command.order_id,
                 price: order.price,
@@ -219,56 +207,36 @@ defmodule Exchange.Orderbook do
     %{ob | symbol: symbol}
   end
 
-  def apply(ob, %OrderPlaced{type: :stop_loss} = order) do
-    new_order = %{order_id: order.order_id, side: order.side, type: :stop_loss, stop_price: order.stop_price, quantity: order.quantity}
-    %{ob | stop_loss_orders: Map.put(ob.stop_loss_orders, new_order.order_id, new_order)}
-  end
+  def apply(ob, %OrderPlaced{} = order) do
+    new_order = Order.from_map(order)
 
-  def apply(ob, %OrderPlaced{type: :take_profit} = order) do
-    new_order = %{order_id: order.order_id, side: order.side, type: :take_profit, stop_price: order.stop_price, quantity: order.quantity}
-    %{ob | take_profit_orders: Map.put(ob.take_profit_orders, new_order.order_id, new_order)}
-  end
-
-  def apply(ob, %OrderPlaced{side: :sell} = sell_order) do
-    new_order = %{order_id: sell_order.order_id, price: sell_order.price, quantity: sell_order.quantity}
-    %{ob | sell_orders: Map.put(ob.sell_orders, new_order.order_id, new_order)}
-  end
-
-  def apply(ob, %OrderPlaced{side: :buy} = buy_order) do
-    new_order = %{order_id: buy_order.order_id, price: buy_order.price, quantity: buy_order.quantity}
-    %{ob | buy_orders: Map.put(ob.buy_orders, new_order.order_id, new_order)}
+    Map.update!(ob, :orders, fn orders ->
+      Map.put(orders, new_order.order_id, new_order)
+    end)
   end
 
   def apply(ob, %OrderExpired{order_id: order_id}) do
-    %{ob |
-      sell_orders: Map.delete(ob.sell_orders, order_id),
-      buy_orders: Map.delete(ob.buy_orders, order_id)
-    }
+    Map.update!(ob, :orders, fn orders ->
+      Map.delete(orders, order_id)
+    end)
   end
 
-  def apply(ob, %TradeExecuted{maker: :buyer} = trade) do
-    buy_orders =
-      Map.update!(ob.buy_orders, trade.buy_order_id, fn order ->
+  def apply(ob, %TradeExecuted{} = trade) do
+    ob
+    |> Map.update!(:orders, fn orders ->
+      orders
+      |> Map.update!(trade.sell_order_id, fn order ->
+        %{order | quantity: order.quantity - trade.quantity}
+      end)
+      |> Map.new()
+      |> Map.update!(trade.buy_order_id, fn order ->
         %{order | quantity: order.quantity - trade.quantity}
       end)
       |> Enum.reject(fn {_, order} ->
         order.quantity <= 0
       end)
       |> Map.new()
-
-    %{ob | buy_orders: buy_orders}
-  end
-
-  def apply(ob, %TradeExecuted{maker: :seller} = trade) do
-    sell_orders =
-      Map.update!(ob.sell_orders, trade.sell_order_id, fn order ->
-        %{order | quantity: order.quantity - trade.quantity}
-      end)
-      |> Enum.reject(fn {_, order} ->
-        order.quantity <= 0
-      end)
-      |> Map.new()
-
-    %{ob | sell_orders: sell_orders}
+    end)
+    |> Map.put(:last_trade_price, trade.price)
   end
 end

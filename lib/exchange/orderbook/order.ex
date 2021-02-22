@@ -1,29 +1,26 @@
-defmodule Exchange.Orderbook.OrderPlaced do
-  @derive Jason.Encoder
+defmodule Exchange.Orderbook.Order do
   @enforce_keys [
-    :symbol,
     :order_id,
+    :side,
     :type,
-    :side
+    :price,
+    :stop_price,
+    :quantity
   ]
   defstruct [
-    :symbol,
     :order_id,
-    :type,
     :side,
-    :time_in_force,
+    :type,
     :price,
     :stop_price,
     :quantity
   ]
 
-  def from_command(command, symbol) do
+  def from_map(command) do
     %__MODULE__{
-      symbol: symbol,
       order_id: command.order_id,
-      type: command.type,
       side: command.side,
-      time_in_force: command.time_in_force,
+      type: command.type,
       price: command.price,
       stop_price: command.stop_price,
       quantity: command.quantity

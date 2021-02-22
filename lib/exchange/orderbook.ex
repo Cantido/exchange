@@ -131,9 +131,13 @@ defmodule Exchange.Orderbook do
       not Map.has_key?(ob.orders, order.order_id) ->
         # just in case some weird circumstance gives us an order that's already been executed
         nil
-      order.type == :stop_loss and ob.last_trade_price <= order.stop_price ->
+      order.type == :stop_loss and order.side == :sell and ob.last_trade_price <= order.stop_price ->
         execute_order(ob, order)
-      order.type == :take_profit and ob.last_trade_price >= order.stop_price ->
+      order.type == :stop_loss and order.side == :buy and ob.last_trade_price >= order.stop_price ->
+        execute_order(ob, order)
+      order.type == :take_profit and order.side == :sell and ob.last_trade_price >= order.stop_price ->
+        execute_order(ob, order)
+      order.type == :take_profit and order.side == :buy and ob.last_trade_price <= order.stop_price ->
         execute_order(ob, order)
       true ->
         nil

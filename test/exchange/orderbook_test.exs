@@ -526,10 +526,12 @@ defmodule OrderbookTest do
     end)
   end
 
-  test "stop loss sell orders place a market order when a trade price is equal to or less than the stop price" do
+  test "stop loss sell orders execute when the stop price is below market price" do
     unrelated_quantity = 1
     quantity = 1
+    market_price = 90
     stop_price = 100
+    eventual_trade_price = 80
 
     stop_limit_sell =
       %PlaceOrder{
@@ -548,7 +550,7 @@ defmodule OrderbookTest do
         type: :limit,
         side: :buy,
         time_in_force: :good_til_cancelled,
-        price: stop_price - 10,
+        price: eventual_trade_price,
         quantity: quantity
       }
 
@@ -559,7 +561,7 @@ defmodule OrderbookTest do
         type: :limit,
         side: :buy,
         time_in_force: :good_til_cancelled,
-        price: stop_price,
+        price: market_price,
         quantity: unrelated_quantity
       }
 
@@ -570,7 +572,7 @@ defmodule OrderbookTest do
         type: :limit,
         side: :sell,
         time_in_force: :good_til_cancelled,
-        price: stop_price,
+        price: market_price,
         quantity: unrelated_quantity
       }
 
@@ -592,7 +594,209 @@ defmodule OrderbookTest do
       end)
   end
 
-  test "stop orders can trigger other stop orders by moving the price" do
+  test "stop loss buy orders are executed when market price is above the stop price" do
+    unrelated_quantity = 1
+    quantity = 1
+    stop_price = 100
+    market_price = 110
+    eventual_trade_price = 120
+
+    stop_limit_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "stop limit order ID",
+        type: :stop_loss,
+        side: :buy,
+        stop_price: stop_price,
+        quantity: quantity
+      }
+
+    remaining_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "order the stop limit should buy ID",
+        type: :limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: eventual_trade_price,
+        quantity: quantity
+      }
+
+    first_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "First buy ID",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: market_price,
+        quantity: unrelated_quantity
+      }
+
+    first_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "First sell ID",
+        type: :limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: market_price,
+        quantity: unrelated_quantity
+      }
+
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(stop_limit_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(remaining_sell, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_sell, consistency: :strong)
+
+    assert_receive_event(Exchange.Commanded, TradeExecuted,
+      fn event ->
+        event.buy_order_id == stop_limit_buy.order_id
+      end,
+      fn stop_limit_trade ->
+        assert stop_limit_trade.sell_order_id == remaining_sell.order_id
+        assert stop_limit_trade.buy_order_id == stop_limit_buy.order_id
+        assert stop_limit_trade.price == remaining_sell.price
+        assert stop_limit_trade.quantity == quantity
+      end)
+  end
+
+  test "take profit sell orders execute when market price is greater than the stop price" do
+    unrelated_quantity = 1
+    quantity = 1
+    stop_price = 100
+
+    take_profit_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "take profit sell command ID",
+        type: :take_profit,
+        side: :sell,
+        stop_price: stop_price,
+        quantity: quantity
+      }
+
+    remaining_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "buy order that the take profit should match",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: stop_price + 10,
+        quantity: quantity
+      }
+
+    first_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "buy order that should set the price for the take-profit sell",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: stop_price,
+        quantity: unrelated_quantity
+      }
+
+    first_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "sell order that should set the price for the take-profit sell",
+        type: :limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: stop_price,
+        quantity: unrelated_quantity
+      }
+
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(take_profit_sell, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(remaining_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_sell, consistency: :strong)
+
+    assert_receive_event(Exchange.Commanded, TradeExecuted,
+      fn event ->
+        event.sell_order_id == take_profit_sell.order_id
+      end,
+      fn take_profit_trade ->
+        assert take_profit_trade.sell_order_id == take_profit_sell.order_id
+        assert take_profit_trade.buy_order_id == remaining_buy.order_id
+        assert take_profit_trade.price == remaining_buy.price
+        assert take_profit_trade.quantity == quantity
+      end)
+  end
+
+  test "take profit buy orders execute when market price is lower than the stop price" do
+    unrelated_quantity = 1
+    quantity = 1
+    market_price = 100
+    stop_price = 110
+    eventual_trade_price = 120
+
+    take_profit_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "take profit sell command ID",
+        type: :take_profit,
+        side: :buy,
+        stop_price: stop_price,
+        quantity: quantity
+      }
+
+    remaining_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "buy order that the take profit should match",
+        type: :limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: eventual_trade_price,
+        quantity: quantity
+      }
+
+    first_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "buy order that should set the price for the take-profit sell",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: market_price,
+        quantity: unrelated_quantity
+      }
+
+    first_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "sell order that should set the price for the take-profit sell",
+        type: :limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: market_price,
+        quantity: unrelated_quantity
+      }
+
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(take_profit_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(remaining_sell, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_sell, consistency: :strong)
+
+    assert_receive_event(Exchange.Commanded, TradeExecuted,
+      fn event ->
+        event.buy_order_id == take_profit_buy.order_id
+      end,
+      fn take_profit_trade ->
+        assert take_profit_trade.sell_order_id == remaining_sell.order_id
+        assert take_profit_trade.buy_order_id == take_profit_buy.order_id
+        assert take_profit_trade.price == remaining_sell.price
+        assert take_profit_trade.quantity == quantity
+      end)
+  end
+
+  test "stop-loss-sell orders can trigger other stop-loss-sell orders by moving the price" do
     quantity = 1
     initial_trade_price = 100
     first_stop_price = initial_trade_price
@@ -699,72 +903,6 @@ defmodule OrderbookTest do
         assert trade.buy_order_id == buy_for_second_stop.order_id
         assert trade.price == second_stop_trade_price
         assert trade.quantity == quantity
-      end)
-  end
-
-  test "take profit sell orders place a market order when a trade price is equal to or greater than the stop price" do
-    unrelated_quantity = 1
-    quantity = 1
-    stop_price = 100
-
-    take_profit_sell =
-      %PlaceOrder{
-        symbol: "BTCUSDT",
-        order_id: "take profit sell command ID",
-        type: :take_profit,
-        side: :sell,
-        stop_price: stop_price,
-        quantity: quantity
-      }
-
-    remaining_buy =
-      %PlaceOrder{
-        symbol: "BTCUSDT",
-        order_id: "buy order that the take profit should match",
-        type: :limit,
-        side: :buy,
-        time_in_force: :good_til_cancelled,
-        price: stop_price + 10,
-        quantity: quantity
-      }
-
-    first_buy =
-      %PlaceOrder{
-        symbol: "BTCUSDT",
-        order_id: "buy order that should set the price for the take-profit sell",
-        type: :limit,
-        side: :buy,
-        time_in_force: :good_til_cancelled,
-        price: stop_price,
-        quantity: unrelated_quantity
-      }
-
-    first_sell =
-      %PlaceOrder{
-        symbol: "BTCUSDT",
-        order_id: "sell order that should set the price for the take-profit sell",
-        type: :limit,
-        side: :sell,
-        time_in_force: :good_til_cancelled,
-        price: stop_price,
-        quantity: unrelated_quantity
-      }
-
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
-    :ok = Exchange.Commanded.dispatch(take_profit_sell, consistency: :strong)
-    :ok = Exchange.Commanded.dispatch(remaining_buy, consistency: :strong)
-    :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
-    :ok = Exchange.Commanded.dispatch(first_sell, consistency: :strong)
-
-    assert_receive_event(Exchange.Commanded, TradeExecuted,
-      fn event ->
-        event.sell_order_id == take_profit_sell.order_id
-      end,
-      fn take_profit_trade ->
-        assert take_profit_trade.sell_order_id == take_profit_sell.order_id
-        assert take_profit_trade.buy_order_id == remaining_buy.order_id
-        assert take_profit_trade.price == remaining_buy.price
-        assert take_profit_trade.quantity == quantity
       end)
   end
 end

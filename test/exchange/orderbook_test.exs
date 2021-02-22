@@ -595,7 +595,9 @@ defmodule OrderbookTest do
   test "stop orders can trigger other stop orders by moving the price" do
     quantity = 1
     initial_trade_price = 100
+    first_stop_price = initial_trade_price
     first_stop_trade_price = initial_trade_price - 10
+    second_stop_price = first_stop_trade_price
     second_stop_trade_price = first_stop_trade_price - 10
 
     # The initial buy/sell get executed and matched first, setting the first price
@@ -631,7 +633,7 @@ defmodule OrderbookTest do
         order_id: "stop limit sell that gets executed first",
         type: :stop_loss,
         side: :sell,
-        stop_price: initial_trade_price,
+        stop_price: first_stop_price,
         quantity: quantity
       }
 
@@ -654,7 +656,7 @@ defmodule OrderbookTest do
         order_id: "stop limit sell that gets executed second",
         type: :stop_loss,
         side: :sell,
-        stop_price: first_stop_trade_price,
+        stop_price: second_stop_price,
         quantity: quantity
       }
 

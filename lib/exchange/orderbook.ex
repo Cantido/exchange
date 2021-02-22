@@ -11,6 +11,23 @@ defmodule Exchange.Orderbook do
   alias Exchange.Orderbook.TradeExecuted
   alias Commanded.Aggregate.Multi
 
+  defguard is_symbol(symbol) when
+    is_binary(symbol) and
+    byte_size(symbol) >= 1
+
+  defguard is_time_in_force(tif) when
+    not is_nil(tif) and (
+      tif == :good_til_cancelled or
+      tif == :immediate_or_cancel or
+      tif == :fill_or_kill
+    )
+
+  defguard is_price(price) when
+    is_integer(price) and price > 0
+
+  defguard is_quantity(qty) when
+    is_integer(qty) and qty > 0
+
   defstruct [
     symbol: nil,
     orders: %{},
@@ -30,7 +47,7 @@ defmodule Exchange.Orderbook do
       quantity: qty,
       price: price
     }
-  ) when not is_nil(tif) and not is_nil(qty) and not is_nil(price) do
+  ) when is_time_in_force(tif) and is_quantity(qty) and is_price(price) do
     :ok
   end
 
@@ -39,7 +56,7 @@ defmodule Exchange.Orderbook do
       type: :market,
       quantity: qty
     }
-  ) when not is_nil(qty) do
+  ) when is_quantity(qty) do
     :ok
   end
 
@@ -49,7 +66,7 @@ defmodule Exchange.Orderbook do
       quantity: qty,
       stop_price: stop_price
     }
-  ) when not is_nil(qty) and not is_nil(stop_price) do
+  ) when is_quantity(qty) and is_price(stop_price) do
     :ok
   end
 
@@ -59,7 +76,7 @@ defmodule Exchange.Orderbook do
       quantity: qty,
       stop_price: stop_price
     }
-  ) when not is_nil(qty) and not is_nil(stop_price) do
+  ) when is_quantity(qty) and is_price(stop_price) do
     :ok
   end
 
@@ -67,8 +84,16 @@ defmodule Exchange.Orderbook do
     {:error, :invalid_order}
   end
 
-  def execute(%__MODULE__{symbol: nil}, %OpenOrderbook{symbol: symbol}) do
-    %OrderbookOpened{symbol: symbol}
+  def execute(%__MODULE__{symbol: nil}, %OpenOrderbook{symbol: symbol}) when is_symbol(symbol) do
+    if String.valid?(symbol) do
+      %OrderbookOpened{symbol: symbol}
+    else
+      {:error, :invalid_symbol}
+    end
+  end
+
+  def execute(%__MODULE__{symbol: nil}, %OpenOrderbook{}) do
+    {:error, :invalid_symbol}
   end
 
   def execute(%__MODULE__{}, %OpenOrderbook{}) do
@@ -77,13 +102,13 @@ defmodule Exchange.Orderbook do
 
   def execute(ob, %PlaceOrder{type: :stop_loss} = command) do
     with :ok <- validate_place_order_command(command) do
-      OrderPlaced.from_command(command, ob.symbol)
+      Order.place(command, ob.symbol)
     end
   end
 
   def execute(ob, %PlaceOrder{type: :take_profit} = command) do
     with :ok <- validate_place_order_command(command) do
-      OrderPlaced.from_command(command, ob.symbol)
+      Order.place(command, ob.symbol)
     end
   end
 
@@ -98,7 +123,7 @@ defmodule Exchange.Orderbook do
   end
 
   defp place_order(ob, command) do
-    OrderPlaced.from_command(command, ob.symbol)
+    Order.place(command, ob.symbol)
   end
 
   defp trigger_stop_orders(ob) do
@@ -127,15 +152,15 @@ defmodule Exchange.Orderbook do
     stop_limit_order_events ++ take_profit_events
   end
 
-  defp execute_order(ob, command) do
+  defp execute_order(ob, order) do
     sort_order =
-      case command.side do
+      case order.side do
         :sell -> :desc
         :buy -> :asc
       end
 
     opposite_side =
-      case command.side do
+      case order.side do
         :sell -> :buy
         :buy -> :sell
       end
@@ -143,34 +168,34 @@ defmodule Exchange.Orderbook do
     orders_to_match = Map.values(ob.orders) |> Enum.filter(& &1.side == opposite_side)
 
     matching_orders =
-      if command.type in [:market, :stop_loss, :take_profit] do
+      if order.type in [:market, :stop_loss, :take_profit] do
         Enum.sort_by(orders_to_match, & &1.price, sort_order)
       else
-        Enum.filter(orders_to_match, fn order ->
-          order.price == command.price
+        Enum.filter(orders_to_match, fn potential_match ->
+          potential_match.price == order.price
         end)
       end
 
     {trades, remaining_quantity} =
-      Enum.reduce_while(matching_orders, {[], command.quantity}, fn order, {events, quantity} ->
+      Enum.reduce_while(matching_orders, {[], order.quantity}, fn matched_order, {events, quantity} ->
         trade =
-          case command.side do
+          case order.side do
             :sell ->
               %TradeExecuted{
                 symbol: ob.symbol,
-                sell_order_id: command.order_id,
-                buy_order_id: order.order_id,
-                price: order.price,
-                quantity: min(command.quantity, order.quantity),
+                sell_order_id: order.order_id,
+                buy_order_id: matched_order.order_id,
+                price: matched_order.price,
+                quantity: min(order.quantity, matched_order.quantity),
                 maker: :buyer
               }
             :buy ->
               %TradeExecuted{
                 symbol: ob.symbol,
-                sell_order_id: order.order_id,
-                buy_order_id: command.order_id,
-                price: order.price,
-                quantity: min(order.quantity, command.quantity),
+                sell_order_id: matched_order.order_id,
+                buy_order_id: order.order_id,
+                price: matched_order.price,
+                quantity: min(matched_order.quantity, order.quantity),
                 maker: :seller
               }
           end
@@ -184,14 +209,14 @@ defmodule Exchange.Orderbook do
       end)
 
     if remaining_quantity > 0 do
-      if command.type in [:market, :stop_loss, :take_profit] do
-        trades ++ [%OrderExpired{order_id: command.order_id}]
+      if order.type in [:market, :stop_loss, :take_profit] do
+        trades ++ [Order.expire(order)]
       else
-        case command.time_in_force do
+        case order.time_in_force do
           :fill_or_kill ->
-            [%OrderExpired{order_id: command.order_id}]
+            [Order.expire(order)]
           :immediate_or_cancel ->
-            trades ++ [%OrderExpired{order_id: command.order_id}]
+            trades ++ [Order.expire(order)]
           :good_til_cancelled ->
             trades
         end

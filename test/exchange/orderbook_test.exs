@@ -592,6 +592,114 @@ defmodule OrderbookTest do
       end)
   end
 
+  test "stop orders can trigger other stop orders by moving the price" do
+    quantity = 1
+    initial_trade_price = 100
+    first_stop_trade_price = initial_trade_price - 10
+    second_stop_trade_price = first_stop_trade_price - 10
+
+    # The initial buy/sell get executed and matched first, setting the first price
+
+    intial_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "First buy that triggers the first stop order",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: initial_trade_price,
+        quantity: 1
+      }
+
+    initial_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "First sell that triggers the first stop order",
+        type: :limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: initial_trade_price,
+        quantity: 1
+      }
+
+    # The price set by the initial sell triggers the first stop order.
+    # This trade lowers the price, since it executes as a market order.
+
+    first_stop_limit_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "stop limit sell that gets executed first",
+        type: :stop_loss,
+        side: :sell,
+        stop_price: initial_trade_price,
+        quantity: quantity
+      }
+
+    buy_for_first_stop =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "Order that the first stop should buy",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: first_stop_trade_price,
+        quantity: quantity
+      }
+
+    # Since the price was lowered by the stop-loss order, that triggers another stop order.
+
+    second_stop_limit_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "stop limit sell that gets executed second",
+        type: :stop_loss,
+        side: :sell,
+        stop_price: first_stop_trade_price,
+        quantity: quantity
+      }
+
+    buy_for_second_stop =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "Order that the second stop should buy",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: second_stop_trade_price,
+        quantity: quantity
+      }
+
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_stop_limit_sell, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(second_stop_limit_sell, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(buy_for_first_stop, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(buy_for_second_stop, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(intial_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(initial_sell, consistency: :strong)
+
+    assert_receive_event(Exchange.Commanded, TradeExecuted,
+      fn event ->
+        event.sell_order_id == first_stop_limit_sell.order_id
+      end,
+      fn trade ->
+        assert trade.sell_order_id == first_stop_limit_sell.order_id
+        assert trade.buy_order_id == buy_for_first_stop.order_id
+        assert trade.price == first_stop_trade_price
+        assert trade.quantity == quantity
+      end)
+
+    assert_receive_event(Exchange.Commanded, TradeExecuted,
+      fn event ->
+        event.sell_order_id == second_stop_limit_sell.order_id
+      end,
+      fn trade ->
+        assert trade.sell_order_id == second_stop_limit_sell.order_id
+        assert trade.buy_order_id == buy_for_second_stop.order_id
+        assert trade.price == second_stop_trade_price
+        assert trade.quantity == quantity
+      end)
+  end
+
   test "take profit sell orders place a market order when a trade price is equal to or greater than the stop price" do
     unrelated_quantity = 1
     quantity = 1

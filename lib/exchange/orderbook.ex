@@ -118,7 +118,7 @@ defmodule Exchange.Orderbook do
       |> Multi.new()
       |> Multi.execute(&place_order(&1, command))
       |> Multi.execute(&execute_order(&1, command))
-      |> Multi.execute(&trigger_stop_orders(&1))
+      |> Multi.reduce(Map.values(ob.orders), &match_order(&1, &2))
     end
   end
 
@@ -126,30 +126,18 @@ defmodule Exchange.Orderbook do
     Order.place(command, ob.symbol)
   end
 
-  defp trigger_stop_orders(ob) do
-    stop_limit_orders_to_execute =
-      Enum.filter(ob.orders, fn {_id, order} ->
-        order.type == :stop_loss and ob.last_trade_price <= order.stop_price
-      end)
-      |> Map.new()
-
-    stop_limit_order_events =
-      Enum.flat_map(stop_limit_orders_to_execute, fn {_id, stop} ->
-        execute_order(ob, stop)
-      end)
-
-    take_profit_orders_to_execute =
-      Enum.filter(ob.orders, fn {_id, order} ->
-        order.type == :take_profit and ob.last_trade_price >= order.stop_price
-      end)
-      |> Map.new()
-
-    take_profit_events =
-      Enum.flat_map(take_profit_orders_to_execute, fn {_id, stop} ->
-        execute_order(ob, stop)
-      end)
-
-    stop_limit_order_events ++ take_profit_events
+  defp match_order(ob, order) do
+    cond do
+      not Map.has_key?(ob.orders, order.order_id) ->
+        # just in case some weird circumstance gives us an order that's already been executed
+        nil
+      order.type == :stop_loss and ob.last_trade_price <= order.stop_price ->
+        execute_order(ob, order)
+      order.type == :take_profit and ob.last_trade_price >= order.stop_price ->
+        execute_order(ob, order)
+      true ->
+        nil
+    end
   end
 
   defp execute_order(ob, order) do

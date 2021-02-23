@@ -17,6 +17,8 @@ config :exchange, Exchange.EventStore,
   hostname: "localhost",
   pool_size: 10
 
+config :commanded, event_store_adapter: Commanded.EventStore.Adapters.EventStore
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #

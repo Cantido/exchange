@@ -9,7 +9,8 @@ use Mix.Config
 
 config :exchange,
   ecto_repos: [Exchange.Repo],
-  event_stores: [Exchange.EventStore]
+  event_stores: [Exchange.EventStore],
+  generators: [binary_id: true]
 
 # Configures the endpoint
 config :exchange, ExchangeWeb.Endpoint,

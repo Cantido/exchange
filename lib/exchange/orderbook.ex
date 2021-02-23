@@ -245,7 +245,6 @@ defmodule Exchange.Orderbook do
       |> Map.update!(trade.sell_order_id, fn order ->
         %{order | quantity: order.quantity - trade.quantity}
       end)
-      |> Map.new()
       |> Map.update!(trade.buy_order_id, fn order ->
         %{order | quantity: order.quantity - trade.quantity}
       end)

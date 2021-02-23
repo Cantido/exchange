@@ -905,4 +905,108 @@ defmodule OrderbookTest do
         assert trade.quantity == quantity
       end)
   end
+
+  test "market buy orders don't match existing stop-loss sell orders" do
+    quantity = 1
+    market_price = 110
+    stop_price = 105
+
+    stop_limit_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "stop limit order that should be left alone",
+        type: :stop_loss,
+        side: :sell,
+        stop_price: stop_price,
+        quantity: quantity
+      }
+
+    limit_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "order that the market order should buy",
+        type: :limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: market_price,
+        quantity: quantity
+      }
+
+    market_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "The order that should buy the limit sell",
+        type: :market,
+        side: :buy,
+        quantity: quantity
+      }
+
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(stop_limit_sell, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(limit_sell, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(market_buy, consistency: :strong)
+
+    assert_receive_event(Exchange.Commanded, TradeExecuted,
+      fn event ->
+        event.buy_order_id == market_buy.order_id
+      end,
+      fn trade ->
+        assert trade.sell_order_id == limit_sell.order_id
+        assert trade.buy_order_id == market_buy.order_id
+        assert trade.price == market_price
+        assert trade.quantity == quantity
+      end)
+  end
+
+  test "market sell orders don't match existing take-profit buy orders" do
+    quantity = 1
+    market_price = 105
+    stop_price = 110
+
+    take_profit_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "stop limit order that should be left alone",
+        type: :take_profit,
+        side: :buy,
+        stop_price: stop_price,
+        quantity: quantity
+      }
+
+    limit_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "order that the market order should buy",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: market_price,
+        quantity: quantity
+      }
+
+    market_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "The order that should buy the limit sell",
+        type: :market,
+        side: :sell,
+        quantity: quantity
+      }
+
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(take_profit_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(limit_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(market_sell, consistency: :strong)
+
+    assert_receive_event(Exchange.Commanded, TradeExecuted,
+      fn event ->
+        event.sell_order_id == market_sell.order_id
+      end,
+      fn trade ->
+        assert trade.sell_order_id == market_sell.order_id
+        assert trade.buy_order_id == limit_buy.order_id
+        assert trade.price == market_price
+        assert trade.quantity == quantity
+      end)
+  end
 end

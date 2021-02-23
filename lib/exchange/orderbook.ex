@@ -11,6 +11,8 @@ defmodule Exchange.Orderbook do
   alias Exchange.Orderbook.TradeExecuted
   alias Commanded.Aggregate.Multi
 
+  require Logger
+
   defguard is_symbol(symbol) when
     is_binary(symbol) and
     byte_size(symbol) >= 1
@@ -157,7 +159,12 @@ defmodule Exchange.Orderbook do
         :buy -> :sell
       end
 
-    orders_to_match = Map.values(ob.orders) |> Enum.filter(& &1.side == opposite_side)
+    orders_to_match =
+      Map.values(ob.orders)
+      |> Enum.filter(& &1.side == opposite_side)
+      |> Enum.filter(& &1.type == :limit)
+
+    Logger.warn("matching orders: #{inspect orders_to_match, pretty: true}")
 
     matching_orders =
       if order.type == :market  do

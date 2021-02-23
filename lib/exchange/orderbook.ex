@@ -132,13 +132,13 @@ defmodule Exchange.Orderbook do
         # just in case some weird circumstance gives us an order that's already been executed
         nil
       order.type == :stop_loss and order.side == :sell and ob.last_trade_price <= order.stop_price ->
-        execute_order(ob, order)
+        execute_order(ob, %{order | type: :market})
       order.type == :stop_loss and order.side == :buy and ob.last_trade_price >= order.stop_price ->
-        execute_order(ob, order)
+        execute_order(ob, %{order | type: :market})
       order.type == :take_profit and order.side == :sell and ob.last_trade_price >= order.stop_price ->
-        execute_order(ob, order)
+        execute_order(ob, %{order | type: :market})
       order.type == :take_profit and order.side == :buy and ob.last_trade_price <= order.stop_price ->
-        execute_order(ob, order)
+        execute_order(ob, %{order | type: :market})
       true ->
         nil
     end
@@ -160,7 +160,7 @@ defmodule Exchange.Orderbook do
     orders_to_match = Map.values(ob.orders) |> Enum.filter(& &1.side == opposite_side)
 
     matching_orders =
-      if order.type in [:market, :stop_loss, :take_profit] do
+      if order.type == :market  do
         Enum.sort_by(orders_to_match, & &1.price, sort_order)
       else
         Enum.filter(orders_to_match, fn potential_match ->
@@ -201,7 +201,7 @@ defmodule Exchange.Orderbook do
       end)
 
     if remaining_quantity > 0 do
-      if order.type in [:market, :stop_loss, :take_profit] do
+      if order.type == :market do
         trades ++ [Order.expire(order)]
       else
         case order.time_in_force do

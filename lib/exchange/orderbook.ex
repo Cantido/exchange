@@ -74,6 +74,30 @@ defmodule Exchange.Orderbook do
 
   defp validate_place_order_command(
     %PlaceOrder{
+      type: :stop_loss_limit,
+      time_in_force: tif,
+      quantity: qty,
+      price: price,
+      stop_price: stop_price
+    }
+  ) when is_time_in_force(tif) and is_price(price) and is_quantity(qty) and is_price(stop_price) do
+    :ok
+  end
+
+  defp validate_place_order_command(
+    %PlaceOrder{
+      type: :take_profit_limit,
+      time_in_force: tif,
+      quantity: qty,
+      price: price,
+      stop_price: stop_price
+    }
+  ) when is_time_in_force(tif) and is_price(price) and is_quantity(qty) and is_price(stop_price) do
+    :ok
+  end
+
+  defp validate_place_order_command(
+    %PlaceOrder{
       type: :take_profit,
       quantity: qty,
       stop_price: stop_price
@@ -108,6 +132,12 @@ defmodule Exchange.Orderbook do
     end
   end
 
+  def execute(ob, %PlaceOrder{type: :stop_loss_limit} = command) do
+    with :ok <- validate_place_order_command(command) do
+      Order.place(command, ob.symbol)
+    end
+  end
+
   def execute(ob, %PlaceOrder{type: :take_profit} = command) do
     with :ok <- validate_place_order_command(command) do
       Order.place(command, ob.symbol)
@@ -137,10 +167,18 @@ defmodule Exchange.Orderbook do
         execute_order(ob, %{order | type: :market})
       order.type == :stop_loss and order.side == :buy and ob.last_trade_price >= order.stop_price ->
         execute_order(ob, %{order | type: :market})
+      order.type == :stop_loss_limit and order.side == :sell and ob.last_trade_price <= order.stop_price ->
+        execute_order(ob, %{order | type: :limit})
+      order.type == :stop_loss_limit and order.side == :buy and ob.last_trade_price >= order.stop_price ->
+        execute_order(ob, %{order | type: :limit})
       order.type == :take_profit and order.side == :sell and ob.last_trade_price >= order.stop_price ->
         execute_order(ob, %{order | type: :market})
       order.type == :take_profit and order.side == :buy and ob.last_trade_price <= order.stop_price ->
         execute_order(ob, %{order | type: :market})
+      order.type == :take_profit_limit and order.side == :sell and ob.last_trade_price >= order.stop_price ->
+        execute_order(ob, %{order | type: :limit})
+      order.type == :take_profit_limit and order.side == :buy and ob.last_trade_price <= order.stop_price ->
+        execute_order(ob, %{order | type: :limit})
       true ->
         nil
     end

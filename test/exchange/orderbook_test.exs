@@ -1009,4 +1009,142 @@ defmodule OrderbookTest do
         assert trade.quantity == quantity
       end)
   end
+
+  test "stop-loss-limit sell orders can be executed once they are triggered" do
+    unrelated_quantity = 1
+    quantity = 1
+    market_price = 100
+    stop_price = 110
+
+    stop_loss_limit_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "stop-loss-limit order",
+        type: :stop_loss_limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: stop_price,
+        stop_price: stop_price,
+        quantity: quantity
+      }
+
+    remaining_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "buy order that the stop-loss-limit should match",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: stop_price,
+        quantity: quantity
+      }
+
+    first_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "buy order that triggers the stop-loss-limit sell",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: market_price,
+        quantity: unrelated_quantity
+      }
+
+    first_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "sell order that triggers the stop-loss-limit sell",
+        type: :limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: market_price,
+        quantity: unrelated_quantity
+      }
+
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(stop_loss_limit_sell, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(remaining_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_sell, consistency: :strong)
+
+    assert_receive_event(Exchange.Commanded, TradeExecuted,
+      fn event ->
+        event.sell_order_id == stop_loss_limit_sell.order_id
+      end,
+      fn trade ->
+        assert trade.sell_order_id == stop_loss_limit_sell.order_id
+        assert trade.buy_order_id == remaining_buy.order_id
+        assert trade.price == stop_price
+        assert trade.quantity == quantity
+      end)
+  end
+
+  test "take-profit-limit sell orders can be executed once they are triggered" do
+    unrelated_quantity = 1
+    quantity = 1
+    market_price = 100
+    stop_price = 90
+
+    take_profit_limit_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "take-profit-limit order",
+        type: :take_profit_limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: stop_price,
+        stop_price: stop_price,
+        quantity: quantity
+      }
+
+    remaining_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "buy order that the take-profit-limit should match",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: stop_price,
+        quantity: quantity
+      }
+
+    first_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "buy order that triggers the take-profit-limit sell",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: market_price,
+        quantity: unrelated_quantity
+      }
+
+    first_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "sell order that triggers the take-profit-limit sell",
+        type: :limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: market_price,
+        quantity: unrelated_quantity
+      }
+
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(take_profit_limit_sell, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(remaining_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_sell, consistency: :strong)
+
+    assert_receive_event(Exchange.Commanded, TradeExecuted,
+      fn event ->
+        event.sell_order_id == take_profit_limit_sell.order_id
+      end,
+      fn trade ->
+        assert trade.sell_order_id == take_profit_limit_sell.order_id
+        assert trade.buy_order_id == remaining_buy.order_id
+        assert trade.price == stop_price
+        assert trade.quantity == quantity
+      end)
+  end
 end

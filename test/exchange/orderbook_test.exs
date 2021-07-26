@@ -6,6 +6,7 @@ defmodule Exchange.OrderbookTest do
   alias Exchange.Orderbook.OrderbookOpened
   alias Exchange.Orderbook.PlaceOrder
   alias Exchange.Orderbook.OrderPlaced
+  alias Exchange.Orderbook.OrderFilled
   alias Exchange.Orderbook.OrderExpired
   alias Exchange.Orderbook.TradeExecuted
   alias Commanded.Aggregates.Aggregate
@@ -109,6 +110,10 @@ defmodule Exchange.OrderbookTest do
       assert executed.price == price
       assert executed.quantity == available_quantity
       assert executed.maker == maker
+    end)
+
+    assert_receive_event(Exchange.Commanded, OrderFilled, fn filled ->
+      assert filled.order_id == first_command.order_id
     end)
   end
 

@@ -7,6 +7,7 @@ defmodule Exchange.Orderbook do
   alias Exchange.Orderbook.OpenOrderbook
   alias Exchange.Orderbook.OrderbookOpened
   alias Exchange.Orderbook.OrderPlaced
+  alias Exchange.Orderbook.OrderFilled
   alias Exchange.Orderbook.OrderExpired
   alias Exchange.Orderbook.TradeExecuted
   alias Commanded.Aggregate.Multi
@@ -238,30 +239,47 @@ defmodule Exchange.Orderbook do
                 timestamp: order.timestamp
               }
           end
+
         remaining_quantity = quantity - trade.quantity
 
+        result =
+          if trade.quantity == matched_order.quantity do
+            fill =
+              %OrderFilled{
+                order_id: matched_order.order_id
+              }
+            {[fill | [trade | events]], remaining_quantity}
+          else
+            {[trade | events], remaining_quantity}
+          end
+
         if remaining_quantity <= 0 do
-          {:halt, {[trade | events], remaining_quantity}}
+          {:halt, result}
         else
-          {:cont, {[trade | events], remaining_quantity}}
+          {:cont, result}
         end
       end)
 
     if remaining_quantity > 0 do
       if order.type == :market do
-        trades ++ [Order.expire(order)]
+        Enum.reverse([Order.expire(order) | trades])
       else
         case order.time_in_force do
           :fill_or_kill ->
             [Order.expire(order)]
           :immediate_or_cancel ->
-            trades ++ [Order.expire(order)]
+            Enum.reverse([Order.expire(order) | trades])
           :good_til_cancelled ->
-            trades
+            Enum.reverse(trades)
         end
       end
     else
-      trades
+      fill =
+        %OrderFilled{
+          order_id: order.order_id
+        }
+
+      Enum.reverse([fill | trades])
     end
   end
 
@@ -276,6 +294,12 @@ defmodule Exchange.Orderbook do
 
     Map.update!(ob, :orders, fn orders ->
       Map.put(orders, new_order.order_id, new_order)
+    end)
+  end
+
+  def apply(ob, %OrderFilled{order_id: order_id}) do
+    Map.update!(ob, :orders, fn orders ->
+      Map.delete(orders, order_id)
     end)
   end
 
@@ -295,10 +319,6 @@ defmodule Exchange.Orderbook do
       |> Map.update!(trade.buy_order_id, fn order ->
         %{order | quantity: order.quantity - trade.quantity}
       end)
-      |> Enum.reject(fn {_, order} ->
-        order.quantity <= 0
-      end)
-      |> Map.new()
     end)
     |> Map.put(:last_trade_price, trade.price)
   end

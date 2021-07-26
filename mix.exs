@@ -35,6 +35,7 @@ defmodule Exchange.MixProject do
     [
       {:commanded, "~> 1.2"},
       {:commanded_eventstore_adapter, "~> 1.2"},
+      {:commanded_ecto_projections, "~> 1.2"},
       {:ecto_sql, "~> 3.4"},
       {:elixir_uuid, "~> 1.2"},
       {:floki, ">= 0.27.0", only: :test},

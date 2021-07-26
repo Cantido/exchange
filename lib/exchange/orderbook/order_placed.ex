@@ -4,7 +4,8 @@ defmodule Exchange.Orderbook.OrderPlaced do
     :symbol,
     :order_id,
     :type,
-    :side
+    :side,
+    :timestamp
   ]
   defstruct [
     :symbol,
@@ -14,6 +15,7 @@ defmodule Exchange.Orderbook.OrderPlaced do
     :time_in_force,
     :price,
     :stop_price,
-    :quantity
+    :quantity,
+    :timestamp
   ]
 end

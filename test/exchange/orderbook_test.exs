@@ -1,4 +1,4 @@
-defmodule OrderbookTest do
+defmodule Exchange.OrderbookTest do
   use Exchange.EventStoreCase
   use ExUnitProperties
   alias Exchange.Orderbook
@@ -8,6 +8,7 @@ defmodule OrderbookTest do
   alias Exchange.Orderbook.OrderPlaced
   alias Exchange.Orderbook.OrderExpired
   alias Exchange.Orderbook.TradeExecuted
+  alias Exchange.Orderbooks
   alias Commanded.Aggregates.Aggregate
   require Logger
   import Commanded.Assertions.EventAssertions
@@ -34,7 +35,8 @@ defmodule OrderbookTest do
         side: side,
         time_in_force: :good_til_cancelled,
         price: price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -64,7 +66,8 @@ defmodule OrderbookTest do
         side: first_side,
         time_in_force: :good_til_cancelled,
         price: price,
-        quantity: available_quantity
+        quantity: available_quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     second_side =
@@ -81,7 +84,8 @@ defmodule OrderbookTest do
         side: second_side,
         time_in_force: :good_til_cancelled,
         price: price,
-        quantity: wanted_quantity
+        quantity: wanted_quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -123,7 +127,8 @@ defmodule OrderbookTest do
         side: first_side,
         time_in_force: :good_til_cancelled,
         price: price,
-        quantity: available_quantity
+        quantity: available_quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     second_side =
@@ -140,7 +145,8 @@ defmodule OrderbookTest do
         side: second_side,
         time_in_force: :good_til_cancelled,
         price: price,
-        quantity: wanted_quantity
+        quantity: wanted_quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -188,7 +194,8 @@ defmodule OrderbookTest do
         side: first_side,
         time_in_force: :good_til_cancelled,
         price: price,
-        quantity: available_quantity
+        quantity: available_quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     second_side =
@@ -205,7 +212,8 @@ defmodule OrderbookTest do
         side: second_side,
         time_in_force: :fill_or_kill,
         price: price,
-        quantity: wanted_quantity
+        quantity: wanted_quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -243,7 +251,8 @@ defmodule OrderbookTest do
         side: first_side,
         time_in_force: :good_til_cancelled,
         price: price,
-        quantity: available_quantity
+        quantity: available_quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     second_command =
@@ -254,7 +263,8 @@ defmodule OrderbookTest do
         side: second_side,
         time_in_force: :immediate_or_cancel,
         price: price,
-        quantity: wanted_quantity
+        quantity: wanted_quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -311,7 +321,8 @@ defmodule OrderbookTest do
         side: first_side,
         time_in_force: :good_til_cancelled,
         price: price,
-        quantity: available_quantity
+        quantity: available_quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     second_command =
@@ -322,7 +333,8 @@ defmodule OrderbookTest do
         side: second_side,
         time_in_force: nil,
         price: nil,
-        quantity: wanted_quantity
+        quantity: wanted_quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -382,7 +394,8 @@ defmodule OrderbookTest do
         side: side,
         time_in_force: nil,
         price: nil,
-        quantity: wanted_quantity
+        quantity: wanted_quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -418,7 +431,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: expected_price - 10,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
     higher_buy =
       %PlaceOrder{
@@ -428,7 +442,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: expected_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     market_sell =
@@ -439,7 +454,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: nil,
         price: nil,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -478,7 +494,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: expected_price - 10,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
     higher_sell =
       %PlaceOrder{
@@ -488,7 +505,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: expected_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     market_buy =
@@ -499,7 +517,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: nil,
         price: nil,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -540,7 +559,8 @@ defmodule OrderbookTest do
         type: :stop_loss,
         side: :sell,
         stop_price: stop_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     remaining_buy =
@@ -551,7 +571,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: eventual_trade_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     first_buy =
@@ -562,7 +583,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: market_price,
-        quantity: unrelated_quantity
+        quantity: unrelated_quantity,
+        timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
     first_sell =
@@ -573,7 +595,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: market_price,
-        quantity: unrelated_quantity
+        quantity: unrelated_quantity,
+        timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -608,7 +631,8 @@ defmodule OrderbookTest do
         type: :stop_loss,
         side: :buy,
         stop_price: stop_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     remaining_sell =
@@ -619,7 +643,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: eventual_trade_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     first_buy =
@@ -630,7 +655,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: market_price,
-        quantity: unrelated_quantity
+        quantity: unrelated_quantity,
+        timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
     first_sell =
@@ -641,7 +667,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: market_price,
-        quantity: unrelated_quantity
+        quantity: unrelated_quantity,
+        timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -674,7 +701,8 @@ defmodule OrderbookTest do
         type: :take_profit,
         side: :sell,
         stop_price: stop_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     remaining_buy =
@@ -685,7 +713,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: stop_price + 10,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     first_buy =
@@ -696,7 +725,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: stop_price,
-        quantity: unrelated_quantity
+        quantity: unrelated_quantity,
+        timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
     first_sell =
@@ -707,7 +737,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: stop_price,
-        quantity: unrelated_quantity
+        quantity: unrelated_quantity,
+        timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -742,7 +773,8 @@ defmodule OrderbookTest do
         type: :take_profit,
         side: :buy,
         stop_price: stop_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     remaining_sell =
@@ -753,7 +785,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: eventual_trade_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     first_buy =
@@ -764,7 +797,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: market_price,
-        quantity: unrelated_quantity
+        quantity: unrelated_quantity,
+        timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
     first_sell =
@@ -775,7 +809,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: market_price,
-        quantity: unrelated_quantity
+        quantity: unrelated_quantity,
+        timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -814,7 +849,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: initial_trade_price,
-        quantity: 1
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     initial_sell =
@@ -825,7 +861,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: initial_trade_price,
-        quantity: 1
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     # The price set by the initial sell triggers the first stop order.
@@ -838,7 +875,8 @@ defmodule OrderbookTest do
         type: :stop_loss,
         side: :sell,
         stop_price: first_stop_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
     buy_for_first_stop =
@@ -849,7 +887,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: first_stop_trade_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
     # Since the price was lowered by the stop-loss order, that triggers another stop order.
@@ -861,7 +900,8 @@ defmodule OrderbookTest do
         type: :stop_loss,
         side: :sell,
         stop_price: second_stop_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:04Z]
       }
 
     buy_for_second_stop =
@@ -872,7 +912,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: second_stop_trade_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:05Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -918,7 +959,8 @@ defmodule OrderbookTest do
         type: :stop_loss,
         side: :sell,
         stop_price: stop_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     limit_sell =
@@ -929,7 +971,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: market_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     market_buy =
@@ -938,7 +981,8 @@ defmodule OrderbookTest do
         order_id: "The order that should buy the limit sell",
         type: :market,
         side: :buy,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -970,7 +1014,8 @@ defmodule OrderbookTest do
         type: :take_profit,
         side: :buy,
         stop_price: stop_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     limit_buy =
@@ -981,7 +1026,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: market_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     market_sell =
@@ -990,7 +1036,8 @@ defmodule OrderbookTest do
         order_id: "The order that should buy the limit sell",
         type: :market,
         side: :sell,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -1025,7 +1072,8 @@ defmodule OrderbookTest do
         time_in_force: :good_til_cancelled,
         price: stop_price,
         stop_price: stop_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     remaining_buy =
@@ -1036,7 +1084,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: stop_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     first_buy =
@@ -1047,7 +1096,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: market_price,
-        quantity: unrelated_quantity
+        quantity: unrelated_quantity,
+        timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
     first_sell =
@@ -1058,7 +1108,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: market_price,
-        quantity: unrelated_quantity
+        quantity: unrelated_quantity,
+        timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
@@ -1094,7 +1145,8 @@ defmodule OrderbookTest do
         time_in_force: :good_til_cancelled,
         price: stop_price,
         stop_price: stop_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
     remaining_buy =
@@ -1105,7 +1157,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: stop_price,
-        quantity: quantity
+        quantity: quantity,
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
     first_buy =
@@ -1116,7 +1169,8 @@ defmodule OrderbookTest do
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: market_price,
-        quantity: unrelated_quantity
+        quantity: unrelated_quantity,
+        timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
     first_sell =
@@ -1127,7 +1181,8 @@ defmodule OrderbookTest do
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: market_price,
-        quantity: unrelated_quantity
+        quantity: unrelated_quantity,
+        timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)

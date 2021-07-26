@@ -9,7 +9,8 @@ defmodule Exchange.Orderbook.Order do
     :time_in_force,
     :price,
     :stop_price,
-    :quantity
+    :quantity,
+    :timestamp
   ]
   defstruct [
     :order_id,
@@ -18,7 +19,8 @@ defmodule Exchange.Orderbook.Order do
     :time_in_force,
     :price,
     :stop_price,
-    :quantity
+    :quantity,
+    :timestamp
   ]
 
   def from_map(command) do
@@ -29,7 +31,8 @@ defmodule Exchange.Orderbook.Order do
       time_in_force: command.time_in_force,
       price: command.price,
       stop_price: command.stop_price,
-      quantity: command.quantity
+      quantity: command.quantity,
+      timestamp: command.timestamp
     }
   end
 
@@ -46,7 +49,8 @@ defmodule Exchange.Orderbook.Order do
       time_in_force: order.time_in_force,
       price: order.price,
       stop_price: order.stop_price,
-      quantity: order.quantity
+      quantity: order.quantity,
+      timestamp: order.timestamp
     }
   end
 end

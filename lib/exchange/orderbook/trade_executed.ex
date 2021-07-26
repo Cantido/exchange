@@ -6,7 +6,8 @@ defmodule Exchange.Orderbook.TradeExecuted do
     :buy_order_id,
     :price,
     :quantity,
-    :maker
+    :maker,
+    :timestamp
   ]
   defstruct [
     :symbol,
@@ -14,6 +15,7 @@ defmodule Exchange.Orderbook.TradeExecuted do
     :buy_order_id,
     :price,
     :quantity,
-    :maker
+    :maker,
+    :timestamp
   ]
 end

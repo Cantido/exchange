@@ -224,7 +224,8 @@ defmodule Exchange.Orderbook do
                 buy_order_id: matched_order.order_id,
                 price: matched_order.price,
                 quantity: min(order.quantity, matched_order.quantity),
-                maker: :buyer
+                maker: :buyer,
+                timestamp: order.timestamp
               }
             :buy ->
               %TradeExecuted{
@@ -233,7 +234,8 @@ defmodule Exchange.Orderbook do
                 buy_order_id: order.order_id,
                 price: matched_order.price,
                 quantity: min(matched_order.quantity, order.quantity),
-                maker: :seller
+                maker: :seller,
+                timestamp: order.timestamp
               }
           end
         remaining_quantity = quantity - trade.quantity

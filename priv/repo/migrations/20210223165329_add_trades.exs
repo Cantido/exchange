@@ -9,6 +9,7 @@ defmodule Exchange.Repo.Migrations.AddTrades do
       add :price, :integer, null: false
       add :quantity, :integer, null: false
       add :maker, :string, null: false
+      add :executed_at, :utc_datetime_usec, null: false
     end
   end
 end

@@ -8,5 +8,6 @@ defmodule Exchange.Orderbook.Schema.Trade do
     field :price, :integer
     field :quantity, :integer
     field :maker, Ecto.Enum, values: [:buyer, :seller]
+    field :executed_at, :utc_datetime_usec
   end
 end

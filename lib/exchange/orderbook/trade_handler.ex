@@ -13,7 +13,8 @@ defmodule Exchange.Orderbook.TradeHandler do
       buy_order_id: event.buy_order_id,
       price: event.price,
       quantity: event.quantity,
-      maker: event.maker
+      maker: event.maker,
+      executed_at: event.timestamp
     }
     |> Repo.insert!()
   end

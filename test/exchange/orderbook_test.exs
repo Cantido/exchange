@@ -8,7 +8,6 @@ defmodule Exchange.OrderbookTest do
   alias Exchange.Orderbook.OrderPlaced
   alias Exchange.Orderbook.OrderExpired
   alias Exchange.Orderbook.TradeExecuted
-  alias Exchange.Orderbooks
   alias Commanded.Aggregates.Aggregate
   require Logger
   import Commanded.Assertions.EventAssertions

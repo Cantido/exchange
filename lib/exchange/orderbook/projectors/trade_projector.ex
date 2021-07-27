@@ -14,12 +14,15 @@ defmodule Exchange.Orderbook.TradeProjector do
         buy_order_id: event.buy_order_id,
         price: event.price,
         quantity: event.quantity,
-        maker: String.to_existing_atom(event.maker),
+        maker: to_existing_atom!(event.maker),
         executed_at: parse_timestamp!(event.timestamp)
       }
 
     Ecto.Multi.insert(multi, :trade_projection, projection)
   end
+
+  defp to_existing_atom!(val) when is_atom(val), do: val
+  defp to_existing_atom!(val) when is_binary(val), do: String.to_existing_atom(val)
 
   defp parse_timestamp!(%DateTime{} = timestamp) do
     timestamp

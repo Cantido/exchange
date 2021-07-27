@@ -14,9 +14,9 @@ defmodule Exchange.Orderbook.OrderProjector do
         id: event.order_id,
         status: :new,
         symbol: event.symbol,
-        side: String.to_existing_atom(event.side),
-        type: String.to_existing_atom(event.type),
-        time_in_force: String.to_existing_atom(event.time_in_force),
+        side: to_existing_atom!(event.side),
+        type: to_existing_atom!(event.type),
+        time_in_force: to_existing_atom!(event.time_in_force),
         price: event.price,
         stop_price: event.stop_price,
         quantity: event.quantity,
@@ -25,6 +25,9 @@ defmodule Exchange.Orderbook.OrderProjector do
 
     Ecto.Multi.insert(multi, :order_projection, projection)
   end
+
+  defp to_existing_atom!(val) when is_atom(val), do: val
+  defp to_existing_atom!(val) when is_binary(val), do: String.to_existing_atom(val)
 
   defp parse_timestamp!(%DateTime{} = timestamp) do
     timestamp

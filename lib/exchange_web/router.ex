@@ -19,7 +19,7 @@ defmodule ExchangeWeb.Router do
 
     live "/", PageLive, :index
 
-    live "/history", HistoryLive, :index
+    live "/dashboard", DashboardLive, :index
   end
 
   # Other scopes may use custom stacks.

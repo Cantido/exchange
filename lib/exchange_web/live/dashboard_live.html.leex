@@ -1,0 +1,76 @@
+<h1><%= @symbol %></h1>
+
+<button phx-click="open">Open BTCUSDT</button>
+
+<div class="uk-card uk-card-default uk-card-body uk-width-1-3@m">
+   <form action="#" phx-submit="place_order">
+        <div>
+            <%= label do %> <%= radio_button :order, :side, :buy, class: "uk-radio uk-form-controls" %> Buy <% end %>
+            <%= label do %> <%= radio_button :order, :side, :sell, class: "uk-radio uk-form-controls" %> Sell <% end %>
+        </div>
+
+        <div>
+            <%= label :order, :quantity, class: "uk-form-label"  %>
+            <%= number_input :order, :quantity, class: "uk-input uk-form-controls" %>
+        </div>
+
+        <div>
+            <%= label :order, :price, class: "uk-form-label" %>
+            <%= number_input :order, :price, class: "uk-input uk-form-controls" %>
+        </div>
+
+        <div>
+            <%= submit "Place order", phx_disable_with: "Placing order...", class: "uk-button uk-button-default" %>
+        </div>
+    </form>
+</div>
+
+<section class="uk-width-1-3@m">
+    <h2>Asks</h2>
+    <table class="uk-table">
+        <tr>
+            <th>Price</th>
+            <th>Quantity</th>
+        </tr>
+        <%= for order <- @asks do %>
+            <tr>
+                <td><%= order.price %></td>
+                <td><%= order.quantity %></td>
+            </tr>
+        <% end %>
+    </table>
+</section>
+
+<section class="uk-width-1-3@m">
+    <h2>Bids</h2>
+    <table class="uk-table">
+        <tr>
+            <th>Price</th>
+            <th>Quantity</th>
+        </tr>
+        <%= for order <- @bids do %>
+            <tr>
+                <td><%= order.price %></td>
+                <td><%= order.quantity %></td>
+            </tr>
+        <% end %>
+    </table>
+</section>
+
+<section class="uk-width-1-3@m">
+    <h2>Trades</h2>
+    <table class="uk-table">
+        <tr>
+            <th>Executed at</th>
+            <th>Price</th>
+            <th>Quantity</th>
+        </tr>
+        <%= for trade <- @trades do %>
+            <tr>
+                <td><%= trade.executed_at %></td>
+                <td><%= trade.price %></td>
+                <td><%= trade.quantity %></td>
+            </tr>
+        <% end %>
+    </table>
+</section>

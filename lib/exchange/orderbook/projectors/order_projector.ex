@@ -12,6 +12,7 @@ defmodule Exchange.Orderbook.OrderProjector do
     projection =
       %Order{
         id: event.order_id,
+        symbol: event.symbol,
         side: String.to_existing_atom(event.side),
         type: String.to_existing_atom(event.type),
         time_in_force: String.to_existing_atom(event.time_in_force),

@@ -5,6 +5,7 @@ defmodule Exchange.Orderbook.Schema.Order do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "orders" do
+    field :symbol, :string
     field :side, Ecto.Enum, values: [:buy, :sell]
     field :type, Ecto.Enum, values: [
       :market, :limit, :stop_loss, :stop_loss_limit, :take_profit, :take_profit_limit, :limit_maker

@@ -4,6 +4,7 @@ defmodule Exchange.Repo.Migrations.CreateOrders do
   def change do
     create table(:orders, primary_key: false) do
       add :id, :binary_id, primary_key: true
+      add :symbol, :string, null: false
       add :type, :string, null: false
       add :side, :string, null: false
       add :time_in_force, :string, null: false

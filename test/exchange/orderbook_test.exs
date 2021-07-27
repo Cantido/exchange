@@ -198,6 +198,10 @@ defmodule Exchange.OrderbookTest do
     [{_, remaining_order}] = Map.to_list(ob.orders)
 
     assert remaining_order.quantity == available_quantity - wanted_quantity
+
+    assert_receive_event(Exchange.Commanded, OrderFilled, fn filled ->
+      assert filled.order_id == second_command.order_id
+    end)
   end
 
   test "fill-or-kill order is cancelled if there is not enough quantity on the books" do
@@ -316,6 +320,10 @@ defmodule Exchange.OrderbookTest do
       assert second_expired.order_id == second_command.order_id
     end)
 
+    assert_receive_event(Exchange.Commanded, OrderFilled, fn filled ->
+      assert filled.order_id == first_command.order_id
+    end)
+
     ob = Aggregate.aggregate_state(Exchange.Commanded, Orderbook, "BTCUSDT")
 
     assert Enum.empty?(ob.orders)
@@ -395,6 +403,10 @@ defmodule Exchange.OrderbookTest do
 
     assert_receive_event(Exchange.Commanded, OrderExpired, fn second_expired ->
       assert second_expired.order_id == second_command.order_id
+    end)
+
+    assert_receive_event(Exchange.Commanded, OrderFilled, fn filled ->
+      assert filled.order_id == first_command.order_id
     end)
 
     ob = Aggregate.aggregate_state(Exchange.Commanded, Orderbook, "BTCUSDT")
@@ -500,6 +512,22 @@ defmodule Exchange.OrderbookTest do
       assert trade.price == higher_buy.price
       assert trade.quantity == quantity
     end)
+
+    assert_receive_event(Exchange.Commanded, OrderFilled,
+      fn filled ->
+        filled.order_id == higher_buy.order_id
+      end,
+      fn _ ->
+        assert true
+      end)
+
+    assert_receive_event(Exchange.Commanded, OrderFilled,
+      fn filled ->
+        filled.order_id == market_sell.order_id
+      end,
+      fn _ ->
+        assert true
+      end)
   end
 
   test "market buy orders fill the lowest sells first" do
@@ -563,6 +591,22 @@ defmodule Exchange.OrderbookTest do
       assert trade.price == lower_sell.price
       assert trade.quantity == quantity
     end)
+
+    assert_receive_event(Exchange.Commanded, OrderFilled,
+      fn filled ->
+        filled.order_id == lower_sell.order_id
+      end,
+      fn _ ->
+        assert true
+      end)
+
+    assert_receive_event(Exchange.Commanded, OrderFilled,
+      fn filled ->
+        filled.order_id == market_buy.order_id
+      end,
+      fn _ ->
+        assert true
+      end)
   end
 
   test "stop loss sell orders execute when the stop price is below market price" do

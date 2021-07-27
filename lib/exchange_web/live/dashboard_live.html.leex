@@ -25,52 +25,52 @@
     </form>
 </div>
 
-<section class="uk-width-1-3@m">
-    <h2>Asks</h2>
-    <table class="uk-table">
-        <tr>
-            <th>Price</th>
-            <th>Quantity</th>
-        </tr>
-        <%= for order <- @asks do %>
+<div uk-grid>
+    <div class="uk-width-1-3">
+        <h2>Asks</h2>
+        <table class="uk-table">
             <tr>
-                <td><%= order.price %></td>
-                <td><%= order.quantity %></td>
+                <th>Price</th>
+                <th>Quantity</th>
             </tr>
-        <% end %>
-    </table>
-</section>
+            <%= for order <- @asks do %>
+                <tr>
+                    <td><%= order.price %></td>
+                    <td><%= order.quantity %></td>
+                </tr>
+            <% end %>
+        </table>
+    </div>
 
-<section class="uk-width-1-3@m">
-    <h2>Bids</h2>
-    <table class="uk-table">
-        <tr>
-            <th>Price</th>
-            <th>Quantity</th>
-        </tr>
-        <%= for order <- @bids do %>
+    <div class="uk-width-1-3">
+        <h2>Bids</h2>
+        <table class="uk-table">
             <tr>
-                <td><%= order.price %></td>
-                <td><%= order.quantity %></td>
+                <th>Price</th>
+                <th>Quantity</th>
             </tr>
-        <% end %>
-    </table>
-</section>
+            <%= for order <- @bids do %>
+                <tr>
+                    <td><%= order.price %></td>
+                    <td><%= order.quantity %></td>
+                </tr>
+            <% end %>
+        </table>
+    </div>
 
-<section class="uk-width-1-3@m">
-    <h2>Trades</h2>
-    <table class="uk-table">
-        <tr>
-            <th>Executed at</th>
-            <th>Price</th>
-            <th>Quantity</th>
-        </tr>
-        <%= for trade <- @trades do %>
+    <div class="uk-width-1-3">
+        <h2>Recent Trades</h2>
+        <table class="uk-table">
             <tr>
-                <td><%= trade.executed_at %></td>
-                <td><%= trade.price %></td>
-                <td><%= trade.quantity %></td>
+                <th>Price</th>
+                <th>Quantity</th>
             </tr>
-        <% end %>
-    </table>
-</section>
+            <%= for trade <- @trades do %>
+                <tr>
+                    <td><%= trade.price %></td>
+                    <td><%= trade.quantity %></td>
+                </tr>
+            <% end %>
+        </table>
+    </div>
+</div>

@@ -138,10 +138,7 @@ defmodule Exchange.Orderbook do
     end
   end
 
-  require Logger
-
   defp place_order(ob, command) do
-    Logger.info("Placing order")
     Order.place(command, ob.symbol)
   end
 

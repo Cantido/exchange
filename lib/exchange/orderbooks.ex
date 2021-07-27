@@ -21,6 +21,7 @@ defmodule Exchange.Orderbooks do
       from o in Order,
       where: o.symbol == ^symbol,
       where: o.side == :buy,
+      where: o.status in [:new],
       order_by: [desc: o.price],
       limit: 100
     )
@@ -31,6 +32,7 @@ defmodule Exchange.Orderbooks do
       from o in Order,
       where: o.symbol == ^symbol,
       where: o.side == :sell,
+      where: o.status in [:new],
       order_by: [asc: o.price],
       limit: 100
     )

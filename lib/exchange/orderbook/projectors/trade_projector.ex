@@ -5,7 +5,6 @@ defmodule Exchange.Orderbook.TradeProjector do
     name: "TradeProjector"
   alias Exchange.Orderbook.TradeExecuted
   alias Exchange.Orderbook.Schema.Trade
-  alias Exchange.Repo
 
   project %TradeExecuted{} = event, fn multi ->
     {:ok, ts, _} = DateTime.from_iso8601(event.timestamp)

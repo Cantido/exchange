@@ -4,7 +4,7 @@ defmodule Exchange.Orderbook.OrderProjector do
     repo: Exchange.Repo,
     name: "OrderProjector"
 
-  alias Exchange.Orderbook.OrderPlaced
+  alias Exchange.Orderbook.{OrderPlaced, OrderFilled, OrderExpired}
   alias Exchange.Orderbook.Schema.Order
 
   project %OrderPlaced{} = event, fn multi ->
@@ -12,6 +12,7 @@ defmodule Exchange.Orderbook.OrderProjector do
     projection =
       %Order{
         id: event.order_id,
+        status: :new,
         symbol: event.symbol,
         side: String.to_existing_atom(event.side),
         type: String.to_existing_atom(event.type),
@@ -23,5 +24,21 @@ defmodule Exchange.Orderbook.OrderProjector do
       }
 
     Ecto.Multi.insert(multi, :order_projection, projection)
+  end
+
+  project %OrderFilled{} = event, fn multi ->
+    order =
+      Exchange.Repo.get(Order, event.order_id)
+      |> Ecto.Changeset.change(%{status: :filled})
+
+    Ecto.Multi.update(multi, :order_projection, order)
+  end
+
+  project %OrderExpired{} = event, fn multi ->
+    order =
+      Exchange.Repo.get(Order, event.order_id)
+      |> Ecto.Changeset.change(%{status: :expired})
+
+    Ecto.Multi.update(multi, :order_projection, order)
   end
 end

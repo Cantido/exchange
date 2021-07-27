@@ -120,12 +120,13 @@ defmodule Exchange.Orderbook do
     end
   end
 
-  def execute(%__MODULE__{symbol: nil}, %OpenOrderbook{}) do
-    {:error, :invalid_symbol}
-  end
-
   def execute(%__MODULE__{}, %OpenOrderbook{}) do
     {:error, :orderbook_already_open}
+  end
+
+
+  def execute(%__MODULE__{symbol: nil}, _) do
+    {:error, :orderbook_not_opened}
   end
 
   def execute(ob, %PlaceOrder{} = command) do

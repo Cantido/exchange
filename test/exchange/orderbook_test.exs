@@ -52,6 +52,22 @@ defmodule Exchange.OrderbookTest do
     end)
   end
 
+  test "placing an order returns an error when the orderbook hasn't been opened yet" do
+    command =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "first command ID",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: 1,
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:00Z]
+      }
+
+    {:error, :orderbook_not_opened} = Exchange.Commanded.dispatch(command, consistency: :strong)
+  end
+
   test "good-til-cancelled limit orders match everything available and then go on the books" do
     price = 100
     first_side = :buy

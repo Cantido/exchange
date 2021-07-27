@@ -7,7 +7,6 @@ defmodule Exchange.Orderbook.TradeProjector do
   alias Exchange.Orderbook.Schema.Trade
 
   project %TradeExecuted{} = event, fn multi ->
-    {:ok, ts, _} = DateTime.from_iso8601(event.timestamp)
     projection =
       %Trade{
         symbol: event.symbol,
@@ -16,9 +15,18 @@ defmodule Exchange.Orderbook.TradeProjector do
         price: event.price,
         quantity: event.quantity,
         maker: String.to_existing_atom(event.maker),
-        executed_at: ts
+        executed_at: parse_timestamp!(event.timestamp)
       }
 
     Ecto.Multi.insert(multi, :trade_projection, projection)
+  end
+
+  defp parse_timestamp!(%DateTime{} = timestamp) do
+    timestamp
+  end
+
+  defp parse_timestamp!(timestamp) when is_binary(timestamp) do
+    {:ok, ts, _} = DateTime.from_iso8601(timestamp)
+    ts
   end
 end

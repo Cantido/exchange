@@ -8,7 +8,7 @@ defmodule Exchange.Orderbook.OrderProjector do
   alias Exchange.Orderbook.Schema.Order
 
   project %OrderPlaced{} = event, fn multi ->
-    {:ok, ts, _} = DateTime.from_iso8601(event.timestamp)
+
     projection =
       %Order{
         id: event.order_id,
@@ -20,10 +20,19 @@ defmodule Exchange.Orderbook.OrderProjector do
         price: event.price,
         stop_price: event.stop_price,
         quantity: event.quantity,
-        timestamp: ts
+        timestamp: parse_timestamp!(event.timestamp)
       }
 
     Ecto.Multi.insert(multi, :order_projection, projection)
+  end
+
+  defp parse_timestamp!(%DateTime{} = timestamp) do
+    timestamp
+  end
+
+  defp parse_timestamp!(timestamp) when is_binary(timestamp) do
+    {:ok, ts, _} = DateTime.from_iso8601(timestamp)
+    ts
   end
 
   project %OrderFilled{} = event, fn multi ->

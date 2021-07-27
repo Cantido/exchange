@@ -1,6 +1,18 @@
 /* This file is for your main application css. */
 @import "../node_modules/nprogress/nprogress.css";
-@import "../node_modules/uikit/dist/css/uikit.min.css";
+
+// 1. Your custom variables and variable overwrites.
+//$global-link-color: #DA7D02;
+
+// 2. Import default variables and available mixins.
+@import "../node_modules/uikit/src/scss/variables-theme.scss";
+@import "../node_modules/uikit/src/scss/mixins-theme.scss";
+
+// 3. Your custom mixin overwrites.
+//@mixin hook-card() { color: #000; }
+
+// 4. Import UIkit.
+@import "../node_modules/uikit/src/scss/uikit-theme.scss";
 
 /* LiveView specific classes for your customizations */
 .phx-no-feedback.invalid-feedback,

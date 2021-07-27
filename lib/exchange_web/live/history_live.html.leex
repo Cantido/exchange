@@ -1,0 +1,28 @@
+<h1>Recent <%= @symbol %> trades</h1>
+
+<button phx-click="open">Open BTCUSDT</button>
+
+<form action="#" phx-submit="place">
+    <fieldset>
+        <%= label do %> <%= radio_button :order, :side, :buy %> Buy <% end %>
+        <%= label do %> <%= radio_button :order, :side, :sell %> Sell <% end %>
+    </fieldset>
+
+    <%= label :order, :quantity %>
+    <%= number_input :order, :quantity %>
+
+    <%= label :order, :price %>
+    <%= number_input :order, :price %>
+
+    <%= submit "Place order", phx_disable_with: "Placing order..." %>
+</form>
+
+<table>
+<%= for trade <- @trades do %>
+    <tr>
+        <td><%= trade.executed_at %></td>
+        <td><%= trade.price %></td>
+        <td><%= trade.quantity %></td>
+    </tr>
+<% end %>
+</table>

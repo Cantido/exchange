@@ -2,6 +2,7 @@ defmodule Exchange.Orderbook.Order do
   alias Exchange.Orderbook.OrderExpired
   alias Exchange.Orderbook.OrderPlaced
 
+  @derive Jason.Encoder
   @enforce_keys [
     :order_id,
     :side,

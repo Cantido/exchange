@@ -31,6 +31,7 @@ defmodule Exchange.Orderbook do
   defguard is_quantity(qty) when
     is_integer(qty) and qty > 0
 
+  @derive Jason.Encoder
   defstruct [
     symbol: nil,
     orders: %{},
@@ -127,24 +128,6 @@ defmodule Exchange.Orderbook do
     {:error, :orderbook_already_open}
   end
 
-  def execute(ob, %PlaceOrder{type: :stop_loss} = command) do
-    with :ok <- validate_place_order_command(command) do
-      Order.place(command, ob.symbol)
-    end
-  end
-
-  def execute(ob, %PlaceOrder{type: :stop_loss_limit} = command) do
-    with :ok <- validate_place_order_command(command) do
-      Order.place(command, ob.symbol)
-    end
-  end
-
-  def execute(ob, %PlaceOrder{type: :take_profit} = command) do
-    with :ok <- validate_place_order_command(command) do
-      Order.place(command, ob.symbol)
-    end
-  end
-
   def execute(ob, %PlaceOrder{} = command) do
     with :ok <- validate_place_order_command(command) do
       ob
@@ -155,7 +138,10 @@ defmodule Exchange.Orderbook do
     end
   end
 
+  require Logger
+
   defp place_order(ob, command) do
+    Logger.info("Placing order")
     Order.place(command, ob.symbol)
   end
 

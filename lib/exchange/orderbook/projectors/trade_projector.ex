@@ -8,6 +8,7 @@ defmodule Exchange.Orderbook.TradeProjector do
   alias Exchange.Repo
 
   project %TradeExecuted{} = event, fn multi ->
+    {:ok, ts, _} = DateTime.from_iso8601(event.timestamp)
     projection =
       %Trade{
         symbol: event.symbol,
@@ -15,8 +16,8 @@ defmodule Exchange.Orderbook.TradeProjector do
         buy_order_id: event.buy_order_id,
         price: event.price,
         quantity: event.quantity,
-        maker: event.maker,
-        executed_at: event.timestamp
+        maker: String.to_existing_atom(event.maker),
+        executed_at: ts
       }
 
     Ecto.Multi.insert(multi, :trade_projection, projection)

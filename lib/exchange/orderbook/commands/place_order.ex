@@ -8,14 +8,14 @@ defmodule Exchange.Orderbook.PlaceOrder do
     :timestamp
   ]
   defstruct [
-    :symbol,
-    :order_id,
-    :type,
-    :side,
-    :time_in_force,
-    :price,
-    :stop_price,
-    :quantity,
-    :timestamp
+    symbol: nil,
+    order_id: nil,
+    type: nil,
+    side: nil,
+    time_in_force: :good_til_cancelled,
+    price: nil,
+    stop_price: nil,
+    quantity: nil,
+    timestamp: nil
   ]
 end

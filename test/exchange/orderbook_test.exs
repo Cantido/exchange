@@ -1266,4 +1266,131 @@ defmodule Exchange.OrderbookTest do
         assert trade.quantity == quantity
       end)
   end
+
+  test "stop-loss-limit sell orders change the price and trigger other orders" do
+    start_price = 100
+    first_stop_loss_stop = 90
+    first_stop_loss_price = 80
+    second_stop_loss_stop = 80
+    second_stop_loss_price = 70
+
+    first_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "first sell order that will set the initial price",
+        type: :limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: start_price,
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:03Z]
+      }
+
+    first_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "first buy order that will set the initial price",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: start_price,
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:02Z]
+      }
+
+    higher_stop_loss =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "stop loss triggered by the first drop",
+        type: :stop_loss_limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: first_stop_loss_price,
+        stop_price: first_stop_loss_stop,
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:00Z]
+      }
+
+    higher_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "buy order that the stop-loss-limit should match",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: first_stop_loss_price,
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:01Z]
+      }
+
+    lower_stop_loss =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "stop loss triggered by the drop caused by the first stop loss",
+        type: :stop_loss_limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: second_stop_loss_price,
+        stop_price: second_stop_loss_stop,
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:00Z]
+      }
+
+    lower_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "buy order that the lower stop-loss-limit should match",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: second_stop_loss_price,
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:01Z]
+      }
+
+    second_sell =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "sell order that will set this whole thing into motion",
+        type: :limit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: first_stop_loss_stop,
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:03Z]
+      }
+
+    second_buy =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "buy order that will set this whole thing into motion",
+        type: :limit,
+        side: :buy,
+        time_in_force: :good_til_cancelled,
+        price: first_stop_loss_stop,
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:02Z]
+      }
+
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_sell, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(higher_stop_loss, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(higher_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(lower_stop_loss, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(lower_buy, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(second_sell, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(second_buy, consistency: :strong)
+
+    assert_receive_event(Exchange.Commanded, TradeExecuted,
+      fn event ->
+        event.sell_order_id == lower_stop_loss.order_id
+      end,
+      fn trade ->
+        assert trade.sell_order_id == lower_stop_loss.order_id
+        assert trade.buy_order_id == lower_buy.order_id
+        assert trade.price == second_stop_loss_price
+        assert trade.quantity == 1
+      end)
+  end
 end

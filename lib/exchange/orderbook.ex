@@ -154,6 +154,9 @@ defmodule Exchange.Orderbook do
 
   defp match_order(ob, order) do
     cond do
+      is_nil(ob.last_trade_price) ->
+        # In case an order gets placed before we've executed any trades
+        nil
       not Map.has_key?(ob.orders, order.order_id) ->
         # just in case some weird circumstance gives us an order that's already been executed
         nil

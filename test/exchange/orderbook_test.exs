@@ -1401,4 +1401,45 @@ defmodule Exchange.OrderbookTest do
         assert trade.quantity == 1
       end)
   end
+
+  test "stop-limit orders don't get executed when the last_order_price is still nil" do
+    # This order should sit on the books and will be checked for a match after every order
+    stop_limit =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "00000000-0000-0000-0000-000000000002",
+        type: :take_profit,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: 110,
+        stop_price: 100,
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:00Z]
+      }
+
+    # A market order that should expire, but it will still trigger order matching
+    expiring_market =
+      %PlaceOrder{
+        symbol: "BTCUSDT",
+        order_id: "00000000-0000-0000-0000-000000000001",
+        type: :market,
+        side: :sell,
+        time_in_force: :good_til_cancelled,
+        price: 100,
+        quantity: 1,
+        timestamp: ~U[2021-07-26T12:00:01Z]
+      }
+
+
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(stop_limit, consistency: :strong)
+
+    refute_receive_event(Exchange.Commanded, OrderExpired,
+      fn ->
+        :ok = Exchange.Commanded.dispatch(expiring_market, consistency: :strong)
+      end,
+      predicate: fn event ->
+        event.order_id == stop_limit.order_id
+      end)
+  end
 end

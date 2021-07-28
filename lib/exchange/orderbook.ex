@@ -178,66 +178,66 @@ defmodule Exchange.Orderbook do
     end
   end
 
-  defp execute_order(ob, order) do
+  defp execute_order(ob, taker_order) do
     sort_order =
-      case order.side do
+      case taker_order.side do
         :sell -> :desc
         :buy -> :asc
       end
 
-    opposite_side =
-      case order.side do
+    maker_side =
+      case taker_order.side do
         :sell -> :buy
         :buy -> :sell
       end
 
     orders_to_match =
       Map.values(ob.orders)
-      |> Enum.filter(& &1.side == opposite_side)
+      |> Enum.filter(& &1.side == maker_side)
       |> Enum.filter(& &1.type == :limit)
 
     matching_orders =
-      if order.type == :market  do
+      if taker_order.type == :market  do
         Enum.sort_by(orders_to_match, & &1.price, sort_order)
       else
         Enum.filter(orders_to_match, fn potential_match ->
-          potential_match.price == order.price
+          potential_match.price == taker_order.price
         end)
       end
 
     {trades, remaining_quantity} =
-      Enum.reduce_while(matching_orders, {[], order.quantity}, fn matched_order, {events, quantity} ->
+      Enum.reduce_while(matching_orders, {[], taker_order.quantity}, fn maker_order, {events, quantity} ->
         trade =
-          case order.side do
+          case taker_order.side do
             :sell ->
               %TradeExecuted{
                 symbol: ob.symbol,
-                sell_order_id: order.order_id,
-                buy_order_id: matched_order.order_id,
-                price: matched_order.price,
-                quantity: min(order.quantity, matched_order.quantity),
+                sell_order_id: taker_order.order_id,
+                buy_order_id: maker_order.order_id,
+                price: maker_order.price,
+                quantity: min(taker_order.quantity, maker_order.quantity),
                 maker: :buyer,
-                timestamp: order.timestamp
+                timestamp: taker_order.timestamp
               }
             :buy ->
               %TradeExecuted{
                 symbol: ob.symbol,
-                sell_order_id: matched_order.order_id,
-                buy_order_id: order.order_id,
-                price: matched_order.price,
-                quantity: min(matched_order.quantity, order.quantity),
+                sell_order_id: maker_order.order_id,
+                buy_order_id: taker_order.order_id,
+                price: maker_order.price,
+                quantity: min(maker_order.quantity, taker_order.quantity),
                 maker: :seller,
-                timestamp: order.timestamp
+                timestamp: taker_order.timestamp
               }
           end
 
         remaining_quantity = quantity - trade.quantity
 
         result =
-          if trade.quantity == matched_order.quantity do
+          if trade.quantity == maker_order.quantity do
             fill =
               %OrderFilled{
-                order_id: matched_order.order_id
+                order_id: maker_order.order_id
               }
             {[fill | [trade | events]], remaining_quantity}
           else
@@ -252,14 +252,14 @@ defmodule Exchange.Orderbook do
       end)
 
     if remaining_quantity > 0 do
-      if order.type == :market do
-        Enum.reverse([Order.expire(order) | trades])
+      if taker_order.type == :market do
+        Enum.reverse([Order.expire(taker_order) | trades])
       else
-        case order.time_in_force do
+        case taker_order.time_in_force do
           :fill_or_kill ->
-            [Order.expire(order)]
+            [Order.expire(taker_order)]
           :immediate_or_cancel ->
-            Enum.reverse([Order.expire(order) | trades])
+            Enum.reverse([Order.expire(taker_order) | trades])
           :good_til_cancelled ->
             Enum.reverse(trades)
         end
@@ -267,7 +267,7 @@ defmodule Exchange.Orderbook do
     else
       fill =
         %OrderFilled{
-          order_id: order.order_id
+          order_id: taker_order.order_id
         }
 
       Enum.reverse([fill | trades])

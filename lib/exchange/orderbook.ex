@@ -133,8 +133,19 @@ defmodule Exchange.Orderbook do
       |> Multi.new()
       |> Multi.execute(&place_order(&1, command))
       |> Multi.execute(&execute_order(&1, command))
-      |> Multi.reduce(Map.values(ob.orders), &match_order(&1, &2))
+      |> Multi.reduce(orders_descending(ob), &match_order(&1, &2))
+      |> Multi.reduce(orders_ascending(ob), &match_order(&1, &2))
     end
+  end
+
+  defp orders_descending(ob) do
+    Map.values(ob.orders)
+    |> Enum.sort_by(& &1.stop_price, :desc)
+  end
+
+  defp orders_ascending(ob) do
+    Map.values(ob.orders)
+    |> Enum.sort_by(& &1.stop_price, :asc)
   end
 
   defp place_order(ob, command) do

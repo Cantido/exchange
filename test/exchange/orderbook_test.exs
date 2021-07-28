@@ -1274,22 +1274,24 @@ defmodule Exchange.OrderbookTest do
     second_stop_loss_stop = 80
     second_stop_loss_price = 70
 
+    # first sell order that will set the initial price
     first_sell =
       %PlaceOrder{
         symbol: "BTCUSDT",
-        order_id: "first sell order that will set the initial price",
+        order_id: "00000000-0000-0000-0000-000000000001",
         type: :limit,
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: start_price,
         quantity: 1,
-        timestamp: ~U[2021-07-26T12:00:03Z]
+        timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
+    # first buy order that will set the initial price
     first_buy =
       %PlaceOrder{
         symbol: "BTCUSDT",
-        order_id: "first buy order that will set the initial price",
+        order_id: "00000000-0000-0000-0000-000000000002",
         type: :limit,
         side: :buy,
         time_in_force: :good_til_cancelled,
@@ -1298,78 +1300,84 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
+    # stop loss triggered by the first drop
     higher_stop_loss =
       %PlaceOrder{
         symbol: "BTCUSDT",
-        order_id: "stop loss triggered by the first drop",
+        order_id: "00000000-0000-0000-0000-000000000003",
         type: :stop_loss_limit,
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: first_stop_loss_price,
         stop_price: first_stop_loss_stop,
         quantity: 1,
-        timestamp: ~U[2021-07-26T12:00:00Z]
+        timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
+    # buy order that the stop-loss-limit should match
     higher_buy =
       %PlaceOrder{
         symbol: "BTCUSDT",
-        order_id: "buy order that the stop-loss-limit should match",
+        order_id: "00000000-0000-0000-0000-000000000004",
         type: :limit,
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: first_stop_loss_price,
         quantity: 1,
-        timestamp: ~U[2021-07-26T12:00:01Z]
+        timestamp: ~U[2021-07-26T12:00:04Z]
       }
 
+    # stop loss triggered by the drop caused by the first stop loss
     lower_stop_loss =
       %PlaceOrder{
         symbol: "BTCUSDT",
-        order_id: "stop loss triggered by the drop caused by the first stop loss",
+        order_id: "00000000-0000-0000-0000-000000000005",
         type: :stop_loss_limit,
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: second_stop_loss_price,
         stop_price: second_stop_loss_stop,
         quantity: 1,
-        timestamp: ~U[2021-07-26T12:00:00Z]
+        timestamp: ~U[2021-07-26T12:00:05Z]
       }
 
+    # buy order that the lower stop-loss-limit should match
     lower_buy =
       %PlaceOrder{
         symbol: "BTCUSDT",
-        order_id: "buy order that the lower stop-loss-limit should match",
+        order_id: "00000000-0000-0000-0000-000000000006",
         type: :limit,
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: second_stop_loss_price,
         quantity: 1,
-        timestamp: ~U[2021-07-26T12:00:01Z]
+        timestamp: ~U[2021-07-26T12:00:06Z]
       }
 
+    # sell order that will set this whole thing into motion
     second_sell =
       %PlaceOrder{
         symbol: "BTCUSDT",
-        order_id: "sell order that will set this whole thing into motion",
+        order_id: "00000000-0000-0000-0000-000000000007",
         type: :limit,
         side: :sell,
         time_in_force: :good_til_cancelled,
         price: first_stop_loss_stop,
         quantity: 1,
-        timestamp: ~U[2021-07-26T12:00:03Z]
+        timestamp: ~U[2021-07-26T12:00:07Z]
       }
 
+    # buy order that will set this whole thing into motion
     second_buy =
       %PlaceOrder{
         symbol: "BTCUSDT",
-        order_id: "buy order that will set this whole thing into motion",
+        order_id: "00000000-0000-0000-0000-000000000008",
         type: :limit,
         side: :buy,
         time_in_force: :good_til_cancelled,
         price: first_stop_loss_stop,
         quantity: 1,
-        timestamp: ~U[2021-07-26T12:00:02Z]
+        timestamp: ~U[2021-07-26T12:00:08Z]
       }
 
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)

@@ -17,8 +17,6 @@ defmodule ExchangeWeb.Router do
   scope "/", ExchangeWeb do
     pipe_through :browser
 
-    live "/", PageLive, :index
-
     live "/dashboard", DashboardLive, :index
   end
 
@@ -39,7 +37,7 @@ defmodule ExchangeWeb.Router do
 
     scope "/" do
       pipe_through :browser
-      live_dashboard "/dashboard", metrics: ExchangeWeb.Telemetry
+      live_dashboard "/live-dashboard", metrics: ExchangeWeb.Telemetry
     end
   end
 end

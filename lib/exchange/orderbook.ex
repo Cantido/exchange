@@ -140,11 +140,13 @@ defmodule Exchange.Orderbook do
 
   defp orders_descending(ob) do
     Map.values(ob.orders)
+    |> Enum.reject(& is_nil(&1.stop_price))
     |> Enum.sort_by(& &1.stop_price, :desc)
   end
 
   defp orders_ascending(ob) do
     Map.values(ob.orders)
+    |> Enum.reject(& is_nil(&1.stop_price))
     |> Enum.sort_by(& &1.stop_price, :asc)
   end
 

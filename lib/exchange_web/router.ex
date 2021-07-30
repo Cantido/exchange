@@ -20,10 +20,13 @@ defmodule ExchangeWeb.Router do
     live "/dashboard", DashboardLive, :index
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", ExchangeWeb do
-  #   pipe_through :api
-  # end
+  scope "/api/v1", ExchangeWeb.API do
+    pipe_through :api
+
+    resources "/symbols", SymbolController do
+      resources "/orders", OrderController, only: [:create]
+    end
+  end
 
   # Enables LiveDashboard only for development
   #

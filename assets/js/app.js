@@ -18,11 +18,58 @@ import NProgress from "nprogress"
 import {LiveSocket} from "phoenix_live_view"
 import UIkit from 'uikit';
 import Icons from 'uikit/dist/js/uikit-icons';
+import Chart from 'chart.js/auto';
+import 'chartjs-adapter-moment';
+import moment from "moment"
 
 UIkit.use(Icons);
 
+let Hooks = {};
+
+Hooks.TradesChart = {
+    mounted() {
+        let trades =
+            JSON.parse(this.el.dataset.trades)
+            .map((trade) => {
+                trade.executed_at = new Date(Date.parse(trade.executed_at));
+                return trade;
+            })
+            .reverse();
+
+        new Chart(this.el, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: "Price",
+                    data: trades,
+                    parsing: {
+                        xAxisKey: "executed_at",
+                        yAxisKey: "price"
+                    }
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: "time",
+                        min: moment().subtract(10, "minutes"),
+                        ticks: {
+                            stepSize: 1
+                        },
+                        time: {
+                            unit: 'second',
+                            stepSize: 5,
+                            round: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+};
+
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
-let liveSocket = new LiveSocket("/live", Socket, {params: {_csrf_token: csrfToken}})
+let liveSocket = new LiveSocket("/live", Socket, {hooks: Hooks, params: {_csrf_token: csrfToken}})
 
 // Show progress bar on live navigation and form submits
 window.addEventListener("phx:page-loading-start", info => NProgress.start())

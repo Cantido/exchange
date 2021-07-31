@@ -1,6 +1,7 @@
 <h1><%= @symbol %></h1>
 
-<button phx-click="open">Open BTCUSDT</button>
+<canvas id="trades-chart" width="400" height="200" phx-hook="TradesChart" data-trades=<%= Jason.encode!(@trades) %>></canvas>
+
 
 <div class="uk-card uk-card-default uk-card-body uk-width-1-3@m">
    <form action="#" phx-submit="place_order">
@@ -24,53 +25,6 @@
         </div>
     </form>
 </div>
-
-<div uk-grid>
-    <div class="uk-width-1-3">
-        <h2>Asks</h2>
-        <table class="uk-table">
-            <tr>
-                <th>Price</th>
-                <th>Quantity</th>
-            </tr>
-            <%= for order <- @asks do %>
-                <tr>
-                    <td><%= order.price %></td>
-                    <td><%= order.quantity %></td>
-                </tr>
-            <% end %>
-        </table>
-    </div>
-
-    <div class="uk-width-1-3">
-        <h2>Bids</h2>
-        <table class="uk-table">
-            <tr>
-                <th>Price</th>
-                <th>Quantity</th>
-            </tr>
-            <%= for order <- @bids do %>
-                <tr>
-                    <td><%= order.price %></td>
-                    <td><%= order.quantity %></td>
-                </tr>
-            <% end %>
-        </table>
-    </div>
-
-    <div class="uk-width-1-3">
-        <h2>Recent Trades</h2>
-        <table class="uk-table">
-            <tr>
-                <th>Price</th>
-                <th>Quantity</th>
-            </tr>
-            <%= for trade <- @trades do %>
-                <tr>
-                    <td><%= trade.price %></td>
-                    <td><%= trade.quantity %></td>
-                </tr>
-            <% end %>
-        </table>
-    </div>
+<div>
+    <button phx-click="open">Open BTCUSDT</button>
 </div>

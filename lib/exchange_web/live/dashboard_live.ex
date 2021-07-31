@@ -29,7 +29,7 @@ defmodule ExchangeWeb.DashboardLive do
   end
 
   defp load(socket, symbol) do
-    trades = Exchange.Orderbooks.trades(symbol)
+    trades = Exchange.Orderbooks.trades(symbol) |> Enum.map(&Map.take(&1, [:executed_at, :price]))
     bids = Exchange.Orderbooks.bids(symbol)
     asks = Exchange.Orderbooks.asks(symbol)
     assign(socket, symbol: symbol, trades: trades, bids: bids, asks: asks)

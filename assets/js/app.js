@@ -36,7 +36,7 @@ Hooks.TradesChart = {
             })
             .reverse();
 
-        new Chart(this.el, {
+        let chart = new Chart(this.el, {
             type: 'line',
             data: {
                 datasets: [{
@@ -65,7 +65,17 @@ Hooks.TradesChart = {
                 }
             }
         });
-    }
+
+        this.handleEvent("trades", (event) => {
+            event.trades.forEach((trade) => {
+                chart.data.datasets.forEach((dataset) => {
+                    trade.executed_at = new Date(Date.parse(trade.executed_at))
+                    dataset.data.push(trade)
+                })
+            })
+            chart.update();
+        });
+    },
 };
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")

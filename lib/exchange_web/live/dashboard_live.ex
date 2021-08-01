@@ -1,7 +1,16 @@
 defmodule ExchangeWeb.DashboardLive do
   use ExchangeWeb, :live_view
+  alias EventStore.RecordedEvent
+  alias Exchange.EventStore
 
   def mount(_, _, socket) do
+    :ok = EventStore.subscribe("$all",
+      selector: fn %RecordedEvent{event_type: type, data: data} ->
+          type == "Elixir.Exchange.Orderbook.TradeExecuted" and
+          data.symbol == "BTCUSDT"
+      end,
+      mapper: fn %RecordedEvent{data: data} -> data end)
+
     {:ok, load(socket, "BTCUSDT")}
   end
 
@@ -26,6 +35,17 @@ defmodule ExchangeWeb.DashboardLive do
     :ok = Exchange.Commanded.dispatch(%Exchange.Orderbook.OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
 
     {:noreply, socket}
+  end
+
+  def handle_info({:events, events}, socket) do
+    trades =
+      Enum.map(events, &Map.take(&1, [:timestamp, :price]))
+      |> Enum.map(fn event ->
+        event
+        |> Map.put(:executed_at, event.timestamp)
+        |> Map.delete(:timestamp)
+      end)
+    {:noreply, push_event(socket, "trades", %{trades: trades})}
   end
 
   defp load(socket, symbol) do

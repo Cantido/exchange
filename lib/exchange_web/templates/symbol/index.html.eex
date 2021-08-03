@@ -1,0 +1,9 @@
+<table class="uk-table">
+    <%= for symbol <- @symbols do %>
+        <tr>
+            <td><%= link symbol, to: "/dashboard" %></td>
+        </tr>
+    <% end %>
+</table>
+
+<%= link "create another", to: Routes.symbol_path(@conn, :new) %>

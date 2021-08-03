@@ -1,8 +1,10 @@
 defmodule Exchange.OrderbooksTest do
-  use Exchange.DataCase
+  use Exchange.DataCase, async: true
   doctest Exchange.Orderbooks
 
   test "trades returns the last 500 trades" do
+    Exchange.Repo.insert(%Exchange.Orderbook.Schema.Symbol{symbol: "BTCUSDT"})
+
     trades_to_insert =
       Enum.map(1..510, fn i ->
         [

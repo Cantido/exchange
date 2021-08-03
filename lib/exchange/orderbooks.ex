@@ -2,6 +2,7 @@ defmodule Exchange.Orderbooks do
   alias Exchange.Commanded
   alias Exchange.Orderbook.Schema.Trade
   alias Exchange.Orderbook.Schema.Order
+  alias Exchange.Orderbook.Schema.Symbol
   alias Exchange.Orderbook.OpenOrderbook
   alias Exchange.Orderbook.PlaceOrder
   alias Exchange.Repo
@@ -36,5 +37,9 @@ defmodule Exchange.Orderbooks do
       order_by: [asc: o.price],
       limit: 100
     )
+  end
+
+  def symbols do
+    Repo.all(Symbol)
   end
 end

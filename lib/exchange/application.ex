@@ -9,6 +9,7 @@ defmodule Exchange.Application do
       Exchange.Commanded,
       Exchange.Orderbook.TradeProjector,
       Exchange.Orderbook.OrderProjector,
+      Exchange.Orderbook.SymbolProjector,
       ExchangeWeb.Telemetry,
       {Phoenix.PubSub, name: Exchange.PubSub},
       ExchangeWeb.Endpoint

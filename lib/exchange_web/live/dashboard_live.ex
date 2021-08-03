@@ -31,12 +31,6 @@ defmodule ExchangeWeb.DashboardLive do
     {:noreply, load(socket, "BTCUSDT")}
   end
 
-  def handle_event("open", _, socket) do
-    :ok = Exchange.Commanded.dispatch(%Exchange.Orderbook.OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
-
-    {:noreply, socket}
-  end
-
   def handle_info({:events, events}, socket) do
     trades =
       Enum.map(events, &Map.take(&1, [:timestamp, :price]))

@@ -18,6 +18,8 @@ defmodule ExchangeWeb.Router do
     pipe_through :browser
 
     live "/dashboard", DashboardLive, :index
+
+    resources "/symbols", SymbolController
   end
 
   scope "/api/v1", ExchangeWeb.API do

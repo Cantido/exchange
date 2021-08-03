@@ -1,5 +1,1 @@
-<%= form_for @changeset, Routes.symbol_path(@conn, :create), fn f -> %>
-    <%= text_input f, :symbol %>
-
-    <%= submit "Submit" %>
-<% end %>
+<%= render "form.html", conn: @conn, changeset: @changeset %>

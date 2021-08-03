@@ -3,21 +3,21 @@ defmodule ExchangeWeb.DashboardLive do
   alias EventStore.RecordedEvent
   alias Exchange.EventStore
 
-  def mount(_, _, socket) do
+  def mount(%{"id" => symbol}, _, socket) do
     :ok = EventStore.subscribe("$all",
       selector: fn %RecordedEvent{event_type: type, data: data} ->
           type == "Elixir.Exchange.Orderbook.TradeExecuted" and
-          data.symbol == "BTCUSDT"
+          data.symbol == symbol
       end,
       mapper: fn %RecordedEvent{data: data} -> data end)
 
-    {:ok, load(socket, "BTCUSDT")}
+    {:ok, load(socket, symbol)}
   end
 
   def handle_event("place_order", %{"order" => order}, socket) do
     Exchange.Commanded.dispatch(
       %Exchange.Orderbook.PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: socket.assigns[:symbol],
         order_id: UUID.uuid4(),
         type: :limit,
         side: String.to_existing_atom(order["side"]),

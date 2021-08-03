@@ -1,7 +1,7 @@
 <table class="uk-table">
     <%= for symbol <- @symbols do %>
         <tr>
-            <td><%= link symbol, to: "/dashboard" %></td>
+            <td><%= link symbol, to: Routes.dashboard_path(@conn, :index, symbol) %></td>
         </tr>
     <% end %>
 </table>

@@ -1,4 +1,4 @@
-<main role="main" class="container">
+<main role="main">
   <%= if flash = get_flash(@conn, :info) do %>
     <div class="uk-alert-primary" uk-alert>
       <a class="uk-alert-close" uk-close></a>

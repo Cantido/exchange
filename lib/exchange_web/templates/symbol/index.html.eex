@@ -1,7 +1,13 @@
+<h1>Trading pairs</h1>
+
 <table class="uk-table">
+    <tr>
+        <th>Symbol</th>
+    </tr>
     <%= for symbol <- @symbols do %>
         <tr>
-            <td><%= link symbol, to: Routes.dashboard_path(@conn, :index, symbol) %></td>
+            <td><%= symbol %></td>
+            <td><%= link "Trade", to: Routes.dashboard_path(@conn, :index, symbol) %></td>
         </tr>
     <% end %>
 </table>

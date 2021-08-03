@@ -11,6 +11,14 @@
   </head>
   <body>
     <div class="uk-container">
+      <nav class="uk-navbar-container uk-margin-bottom" uk-navbar>
+        <div class="uk-navbar-left">
+            <ul class="uk-navbar-nav">
+                <li><%= link "Symbols", to: Routes.symbol_path(@conn, :index) %></li>
+            </ul>
+        </div>
+      </nav>
+
       <%= @inner_content %>
     </div>
   </body>

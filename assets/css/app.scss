@@ -31,6 +31,9 @@
 .phx-disconnected *{
   pointer-events: none;
 }
+.phx-disconnected .uk-spinner {
+  display: block
+}
 
 .phx-modal {
   opacity: 1!important;

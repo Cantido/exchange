@@ -9,4 +9,14 @@ defmodule Exchange.EventStoreCase do
       {:ok, _apps} = Application.ensure_all_started(:exchange)
     end)
   end
+
+  setup tags do
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Exchange.Repo)
+
+    unless tags[:async] do
+      Ecto.Adapters.SQL.Sandbox.mode(Exchange.Repo, {:shared, self()})
+    end
+
+    :ok
+  end
 end

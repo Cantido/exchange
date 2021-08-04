@@ -34,16 +34,6 @@ defmodule Exchange.OrderbooksTest do
   test "klines returns valid candlesticks" do
     Exchange.Repo.insert(%Exchange.Orderbook.Schema.Symbol{symbol: "BTCUSDT"})
 
-    Exchange.Repo.insert(%Exchange.Orderbook.Schema.Trade{
-      symbol: "BTCUSDT",
-      sell_order_id: UUID.uuid4(),
-      buy_order_id: UUID.uuid4(),
-      price: 0,
-      quantity: 1,
-      maker: :seller,
-      executed_at: ~U[2021-07-26T11:00:59.000000Z]
-    })
-
     trades_to_insert =
       Enum.map(1..119, fn i ->
         [
@@ -70,19 +60,19 @@ defmodule Exchange.OrderbooksTest do
 
     first_candle = Enum.at(candles, 0)
 
-    assert first_candle.open == 0
+    assert first_candle.open == 1
     assert first_candle.close == 59
 
     assert first_candle.high == 59
-    assert first_candle.low == 0
+    assert first_candle.low == 1
 
     second_candle = Enum.at(candles, 1)
 
-    assert second_candle.open == 59
+    assert second_candle.open == 60
     assert second_candle.close == 119
 
     assert second_candle.high == 119
-    assert second_candle.low == 59
+    assert second_candle.low == 60
 
   end
 end

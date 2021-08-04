@@ -34,16 +34,6 @@ defmodule Exchange.Orderbooks do
       Keyword.get(opts, :end_time, DateTime.add(start_time, -max_length_seconds, :second))
       |> end_of_minute()
 
-    initial_open_price =
-      Repo.one!(
-        from t in Trade,
-        where: t.symbol == ^symbol,
-        where: fragment("? < ?", t.executed_at, ^start_time),
-        order_by: [desc: t.executed_at],
-        select: t.price,
-        limit: 1
-      )
-
     Repo.all(
       from t in Trade,
       where: t.symbol == ^symbol,
@@ -56,17 +46,13 @@ defmodule Exchange.Orderbooks do
         %{
           open_time: beginning_of_minute(Enum.at(trades, 0).executed_at),
           close_time: end_of_minute(Enum.at(trades, 0).executed_at),
+          open: Enum.at(prices, 0),
           close: Enum.at(prices, -1),
           high: Enum.max(prices),
           low: Enum.min(prices),
           volume: Enum.map(trades, & &1.quantity) |> Enum.sum(),
           price_volume: Enum.sum(prices)
         }
-    end)
-    |> Enum.scan(%{close: initial_open_price}, fn candle, last_candle ->
-      Map.put(candle, :open, last_candle.close)
-      |> Map.update!(:high, fn high -> max(high, last_candle.close) end)
-      |> Map.update!(:low, fn low -> min(low, last_candle.close) end)
     end)
   end
 

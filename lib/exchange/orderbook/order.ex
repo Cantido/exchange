@@ -54,4 +54,56 @@ defmodule Exchange.Orderbook.Order do
       timestamp: order.timestamp
     }
   end
+
+  def execute?(%{type: :stop_loss, side: :sell, stop_price: stop_price}, last_trade_price) do
+    last_trade_price <= stop_price
+  end
+
+  def execute?(%{type: :stop_loss, side: :buy, stop_price: stop_price}, last_trade_price) do
+    last_trade_price >= stop_price
+  end
+
+  def execute?(%{type: :stop_loss_limit, side: :sell, stop_price: stop_price}, last_trade_price) do
+    last_trade_price <= stop_price
+  end
+
+  def execute?(%{type: :stop_loss_limit, side: :buy, stop_price: stop_price}, last_trade_price) do
+    last_trade_price >= stop_price
+  end
+
+  def execute?(%{type: :take_profit, side: :sell, stop_price: stop_price}, last_trade_price) do
+    last_trade_price >= stop_price
+  end
+
+  def execute?(%{type: :take_profit, side: :buy, stop_price: stop_price}, last_trade_price) do
+    last_trade_price <= stop_price
+  end
+
+  def execute?(%{type: :take_profit_limit, side: :sell, stop_price: stop_price}, last_trade_price) do
+    last_trade_price >= stop_price
+  end
+
+  def execute?(%{type: :take_profit_limit, side: :buy, stop_price: stop_price}, last_trade_price) do
+    last_trade_price <= stop_price
+  end
+
+  def execute?(_order, _price) do
+    false
+  end
+
+  def to_execution_order(%{type: :stop_loss} = order) do
+    %{order | type: :market}
+  end
+
+  def to_execution_order(%{type: :take_profit} = order) do
+      %{order | type: :market}
+  end
+
+  def to_execution_order(%{type: :stop_loss_limit} = order) do
+      %{order | type: :limit}
+  end
+
+  def to_execution_order(%{type: :take_profit_limit} = order) do
+      %{order | type: :limit}
+  end
 end

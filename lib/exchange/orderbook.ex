@@ -162,22 +162,8 @@ defmodule Exchange.Orderbook do
       not Map.has_key?(ob.orders, order.order_id) ->
         # just in case some weird circumstance gives us an order that's already been executed
         nil
-      order.type == :stop_loss and order.side == :sell and ob.last_trade_price <= order.stop_price ->
-        execute_order(ob, %{order | type: :market})
-      order.type == :stop_loss and order.side == :buy and ob.last_trade_price >= order.stop_price ->
-        execute_order(ob, %{order | type: :market})
-      order.type == :stop_loss_limit and order.side == :sell and ob.last_trade_price <= order.stop_price ->
-        execute_order(ob, %{order | type: :limit})
-      order.type == :stop_loss_limit and order.side == :buy and ob.last_trade_price >= order.stop_price ->
-        execute_order(ob, %{order | type: :limit})
-      order.type == :take_profit and order.side == :sell and ob.last_trade_price >= order.stop_price ->
-        execute_order(ob, %{order | type: :market})
-      order.type == :take_profit and order.side == :buy and ob.last_trade_price <= order.stop_price ->
-        execute_order(ob, %{order | type: :market})
-      order.type == :take_profit_limit and order.side == :sell and ob.last_trade_price >= order.stop_price ->
-        execute_order(ob, %{order | type: :limit})
-      order.type == :take_profit_limit and order.side == :buy and ob.last_trade_price <= order.stop_price ->
-        execute_order(ob, %{order | type: :limit})
+      Order.execute?(order, ob.last_trade_price) ->
+        execute_order(ob, Order.to_execution_order(order))
       true ->
         nil
     end

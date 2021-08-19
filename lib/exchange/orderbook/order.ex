@@ -55,6 +55,32 @@ defmodule Exchange.Orderbook.Order do
     }
   end
 
+  def find_matching_orders(taker_order, maker_orders) do
+    maker_side =
+      case taker_order.side do
+        :sell -> :buy
+        :buy -> :sell
+      end
+
+    maker_orders =
+      maker_orders
+      |> Enum.filter(& &1.side == maker_side)
+      |> Enum.filter(& &1.type == :limit)
+
+    if taker_order.type == :market  do
+      sort_order = sort_for_match(taker_order)
+
+      Enum.sort_by(maker_orders, & &1.price, sort_order)
+    else
+      Enum.filter(maker_orders, fn maker_order ->
+        maker_order.price == taker_order.price
+      end)
+    end
+  end
+
+  defp sort_for_match(%{side: :sell}), do: :desc
+  defp sort_for_match(%{side: :buy}), do: :asc
+
   def execute?(%{type: :stop_loss, side: :sell, stop_price: stop_price}, last_trade_price) do
     last_trade_price <= stop_price
   end

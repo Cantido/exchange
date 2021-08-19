@@ -170,34 +170,9 @@ defmodule Exchange.Orderbook do
   end
 
   defp execute_order(ob, taker_order) do
-    sort_order =
-      case taker_order.side do
-        :sell -> :desc
-        :buy -> :asc
-      end
-
-    maker_side =
-      case taker_order.side do
-        :sell -> :buy
-        :buy -> :sell
-      end
-
-    orders_to_match =
-      Map.values(ob.orders)
-      |> Enum.filter(& &1.side == maker_side)
-      |> Enum.filter(& &1.type == :limit)
-
-    matching_orders =
-      if taker_order.type == :market  do
-        Enum.sort_by(orders_to_match, & &1.price, sort_order)
-      else
-        Enum.filter(orders_to_match, fn potential_match ->
-          potential_match.price == taker_order.price
-        end)
-      end
-
     {trades, remaining_quantity} =
-      Enum.reduce_while(matching_orders, {[], taker_order.quantity}, fn maker_order, {events, quantity} ->
+      Order.find_matching_orders(taker_order, Map.values(ob.orders))
+      |> Enum.reduce_while({[], taker_order.quantity}, fn maker_order, {events, quantity} ->
         trade =
           case taker_order.side do
             :sell ->

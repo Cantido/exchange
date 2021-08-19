@@ -211,10 +211,7 @@ defmodule Exchange.Orderbook do
         end
       end
     else
-      fill =
-        %OrderFilled{
-          order_id: taker_order.order_id
-        }
+      fill = Order.fill(taker_order)
 
       Enum.reverse([fill | trades])
     end

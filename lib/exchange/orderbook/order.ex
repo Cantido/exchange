@@ -1,6 +1,7 @@
 defmodule Exchange.Orderbook.Order do
   alias Exchange.Orderbook.OrderExpired
   alias Exchange.Orderbook.OrderPlaced
+  alias Exchange.Orderbook.OrderFilled
 
   @derive Jason.Encoder
   @enforce_keys [
@@ -39,6 +40,10 @@ defmodule Exchange.Orderbook.Order do
 
   def expire(order) do
     %OrderExpired{order_id: order.order_id}
+  end
+
+  def fill(order) do
+    %OrderFilled{order_id: order.order_id}
   end
 
   def place(order, symbol) do

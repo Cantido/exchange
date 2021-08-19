@@ -3,6 +3,7 @@ defmodule Exchange.Orderbook do
   Documentation for `Orderbook`.
   """
   alias Exchange.Orderbook.Order
+  alias Exchange.Orderbook.Trade
   alias Exchange.Orderbook.PlaceOrder
   alias Exchange.Orderbook.OpenOrderbook
   alias Exchange.Orderbook.OrderbookOpened
@@ -173,44 +174,23 @@ defmodule Exchange.Orderbook do
     {trades, remaining_quantity} =
       Order.find_matching_orders(taker_order, Map.values(ob.orders))
       |> Enum.reduce_while({[], taker_order.quantity}, fn maker_order, {events, quantity} ->
-        trade =
-          case taker_order.side do
-            :sell ->
-              %TradeExecuted{
-                symbol: ob.symbol,
-                sell_order_id: taker_order.order_id,
-                buy_order_id: maker_order.order_id,
-                price: maker_order.price,
-                quantity: min(taker_order.quantity, maker_order.quantity),
-                maker: :buyer,
-                timestamp: taker_order.timestamp
-              }
-            :buy ->
-              %TradeExecuted{
-                symbol: ob.symbol,
-                sell_order_id: maker_order.order_id,
-                buy_order_id: taker_order.order_id,
-                price: maker_order.price,
-                quantity: min(maker_order.quantity, taker_order.quantity),
-                maker: :seller,
-                timestamp: taker_order.timestamp
-              }
-          end
+        trade = Trade.execute(maker_order, taker_order, ob.symbol)
 
         remaining_quantity = quantity - trade.quantity
 
         result =
           if trade.quantity == maker_order.quantity do
-            fill =
-              %OrderFilled{
-                order_id: maker_order.order_id
-              }
+            fill = Order.fill(maker_order)
             {[fill | [trade | events]], remaining_quantity}
           else
             {[trade | events], remaining_quantity}
           end
 
-        if remaining_quantity <= 0 do
+        if remaining_quantity < 0 do
+          raise "Negative quantity remaining while processing order"
+        end
+
+        if remaining_quantity == 0 do
           {:halt, result}
         else
           {:cont, result}

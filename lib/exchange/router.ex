@@ -15,6 +15,7 @@ defmodule Exchange.Router do
   dispatch [
     Account.Commands.CreateAccount,
     Account.Commands.DebitAccount,
+    Account.Commands.CreditAccount
   ],
   to: Account
 end

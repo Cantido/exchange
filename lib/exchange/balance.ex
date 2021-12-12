@@ -11,4 +11,8 @@ defmodule Exchange.Balance do
   def add(%__MODULE__{free: free} = balance, amount) do
     %__MODULE__{balance | free: free + amount}
   end
+
+  def subtract(%__MODULE__{free: free} = balance, amount) do
+    %__MODULE__{balance | free: free - amount}
+  end
 end

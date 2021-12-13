@@ -125,6 +125,8 @@ defmodule Exchange.OrderbookTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn executed ->
       assert executed.sell_order_id == sell_id
       assert executed.buy_order_id == buy_id
+      assert executed.base_asset == "BTC"
+      assert executed.quote_asset == "USDT"
       assert executed.price == price
       assert executed.quantity == available_quantity
       assert executed.maker == maker
@@ -190,6 +192,8 @@ defmodule Exchange.OrderbookTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn trade ->
       assert trade.sell_order_id == sell_command.order_id
       assert trade.buy_order_id == buy_command.order_id
+      assert trade.base_asset == "BTC"
+      assert trade.quote_asset == "USDT"
       assert trade.price == price
       assert trade.quantity == wanted_quantity
       assert trade.maker == maker
@@ -312,6 +316,8 @@ defmodule Exchange.OrderbookTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn trade ->
       assert trade.sell_order_id == sell_command.order_id
       assert trade.buy_order_id == buy_command.order_id
+      assert trade.base_asset == "BTC"
+      assert trade.quote_asset == "USDT"
       assert trade.price == price
       assert trade.quantity == available_quantity
       assert trade.maker == maker
@@ -398,6 +404,8 @@ defmodule Exchange.OrderbookTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn trade ->
       assert trade.sell_order_id == sell_command.order_id
       assert trade.buy_order_id == buy_command.order_id
+      assert trade.base_asset == "BTC"
+      assert trade.quote_asset == "USDT"
       assert trade.price == price
       assert trade.quantity == available_quantity
       assert trade.maker == maker
@@ -511,6 +519,8 @@ defmodule Exchange.OrderbookTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn trade ->
       assert trade.sell_order_id == market_sell.order_id
       assert trade.buy_order_id == higher_buy.order_id
+      assert trade.base_asset == "BTC"
+      assert trade.quote_asset == "USDT"
       assert trade.price == higher_buy.price
       assert trade.quantity == quantity
     end)
@@ -590,6 +600,8 @@ defmodule Exchange.OrderbookTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn trade ->
       assert trade.buy_order_id == market_buy.order_id
       assert trade.sell_order_id == lower_sell.order_id
+      assert trade.base_asset == "BTC"
+      assert trade.quote_asset == "USDT"
       assert trade.price == lower_sell.price
       assert trade.quantity == quantity
     end)
@@ -678,6 +690,8 @@ defmodule Exchange.OrderbookTest do
       fn stop_limit_trade ->
         assert stop_limit_trade.sell_order_id == stop_limit_sell.order_id
         assert stop_limit_trade.buy_order_id == remaining_buy.order_id
+        assert stop_limit_trade.base_asset == "BTC"
+        assert stop_limit_trade.quote_asset == "USDT"
         assert stop_limit_trade.price == remaining_buy.price
         assert stop_limit_trade.quantity == quantity
       end)
@@ -750,6 +764,8 @@ defmodule Exchange.OrderbookTest do
       fn stop_limit_trade ->
         assert stop_limit_trade.sell_order_id == remaining_sell.order_id
         assert stop_limit_trade.buy_order_id == stop_limit_buy.order_id
+        assert stop_limit_trade.base_asset == "BTC"
+        assert stop_limit_trade.quote_asset == "USDT"
         assert stop_limit_trade.price == remaining_sell.price
         assert stop_limit_trade.quantity == quantity
       end)
@@ -820,6 +836,8 @@ defmodule Exchange.OrderbookTest do
       fn take_profit_trade ->
         assert take_profit_trade.sell_order_id == take_profit_sell.order_id
         assert take_profit_trade.buy_order_id == remaining_buy.order_id
+        assert take_profit_trade.base_asset == "BTC"
+        assert take_profit_trade.quote_asset == "USDT"
         assert take_profit_trade.price == remaining_buy.price
         assert take_profit_trade.quantity == quantity
       end)
@@ -892,6 +910,8 @@ defmodule Exchange.OrderbookTest do
       fn take_profit_trade ->
         assert take_profit_trade.sell_order_id == remaining_sell.order_id
         assert take_profit_trade.buy_order_id == take_profit_buy.order_id
+        assert take_profit_trade.base_asset == "BTC"
+        assert take_profit_trade.quote_asset == "USDT"
         assert take_profit_trade.price == remaining_sell.price
         assert take_profit_trade.quantity == quantity
       end)
@@ -997,6 +1017,8 @@ defmodule Exchange.OrderbookTest do
       fn trade ->
         assert trade.sell_order_id == first_stop_limit_sell.order_id
         assert trade.buy_order_id == buy_for_first_stop.order_id
+        assert trade.base_asset == "BTC"
+        assert trade.quote_asset == "USDT"
         assert trade.price == first_stop_trade_price
         assert trade.quantity == quantity
       end)
@@ -1008,6 +1030,8 @@ defmodule Exchange.OrderbookTest do
       fn trade ->
         assert trade.sell_order_id == second_stop_limit_sell.order_id
         assert trade.buy_order_id == buy_for_second_stop.order_id
+        assert trade.base_asset == "BTC"
+        assert trade.quote_asset == "USDT"
         assert trade.price == second_stop_trade_price
         assert trade.quantity == quantity
       end)
@@ -1063,6 +1087,8 @@ defmodule Exchange.OrderbookTest do
       fn trade ->
         assert trade.sell_order_id == limit_sell.order_id
         assert trade.buy_order_id == market_buy.order_id
+        assert trade.base_asset == "BTC"
+        assert trade.quote_asset == "USDT"
         assert trade.price == market_price
         assert trade.quantity == quantity
       end)
@@ -1118,6 +1144,8 @@ defmodule Exchange.OrderbookTest do
       fn trade ->
         assert trade.sell_order_id == market_sell.order_id
         assert trade.buy_order_id == limit_buy.order_id
+        assert trade.base_asset == "BTC"
+        assert trade.quote_asset == "USDT"
         assert trade.price == market_price
         assert trade.quantity == quantity
       end)
@@ -1191,6 +1219,8 @@ defmodule Exchange.OrderbookTest do
       fn trade ->
         assert trade.sell_order_id == stop_loss_limit_sell.order_id
         assert trade.buy_order_id == remaining_buy.order_id
+        assert trade.base_asset == "BTC"
+        assert trade.quote_asset == "USDT"
         assert trade.price == stop_price
         assert trade.quantity == quantity
       end)
@@ -1264,6 +1294,8 @@ defmodule Exchange.OrderbookTest do
       fn trade ->
         assert trade.sell_order_id == take_profit_limit_sell.order_id
         assert trade.buy_order_id == remaining_buy.order_id
+        assert trade.base_asset == "BTC"
+        assert trade.quote_asset == "USDT"
         assert trade.price == stop_price
         assert trade.quantity == quantity
       end)

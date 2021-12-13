@@ -9,7 +9,7 @@ defmodule Exchange.Orderbook.TradeProjector do
   project %TradeExecuted{} = event, fn multi ->
     projection =
       %Trade{
-        symbol: event.symbol,
+        symbol: event.base_asset <> event.quote_asset,
         sell_order_id: event.sell_order_id,
         buy_order_id: event.buy_order_id,
         price: event.price,

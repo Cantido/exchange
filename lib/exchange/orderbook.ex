@@ -181,7 +181,7 @@ defmodule Exchange.Orderbook do
     {trades, remaining_quantity} =
       Order.find_matching_orders(taker_order, Map.values(ob.orders))
       |> Enum.reduce_while({[], taker_order.quantity}, fn maker_order, {events, quantity} ->
-        trade = Trade.execute(maker_order, taker_order, ob.symbol)
+        trade = Trade.execute(maker_order, taker_order, ob.base_asset, ob.quote_asset)
 
         remaining_quantity = quantity - trade.quantity
 

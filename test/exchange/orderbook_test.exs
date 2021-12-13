@@ -15,10 +15,12 @@ defmodule Exchange.OrderbookTest do
   doctest Exchange.Orderbook
 
   test "open orderbook" do
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"})
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"})
 
     assert_receive_event(Exchange.Commanded, OrderbookOpened, fn event ->
       assert event.symbol == "BTCUSDT"
+      assert event.base_asset == "BTC"
+      assert event.quote_asset == "USDT"
     end)
   end
 
@@ -39,7 +41,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(command, consistency: :strong)
 
     assert_receive_event(Exchange.Commanded, OrderPlaced, fn placed ->
@@ -104,7 +106,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_command, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(second_command, consistency: :strong)
 
@@ -169,7 +171,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_command, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(second_command, consistency: :strong)
 
@@ -240,7 +242,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_command, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(second_command, consistency: :strong)
 
@@ -291,7 +293,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_command, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(second_command, consistency: :strong)
 
@@ -365,7 +367,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_command, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(second_command, consistency: :strong)
 
@@ -430,7 +432,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(order, consistency: :strong)
 
     assert_receive_event(Exchange.Commanded, OrderPlaced, fn placed ->
@@ -490,7 +492,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(higher_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(lower_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(market_sell, consistency: :strong)
@@ -569,7 +571,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(lower_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(higher_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(market_buy, consistency: :strong)
@@ -663,7 +665,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(stop_limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(remaining_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
@@ -735,7 +737,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(stop_limit_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(remaining_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
@@ -805,7 +807,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(take_profit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(remaining_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
@@ -877,7 +879,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(take_profit_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(remaining_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
@@ -980,7 +982,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:05Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_stop_limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(second_stop_limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(buy_for_first_stop, consistency: :strong)
@@ -1049,7 +1051,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(stop_limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(market_buy, consistency: :strong)
@@ -1104,7 +1106,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(take_profit_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(limit_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(market_sell, consistency: :strong)
@@ -1176,7 +1178,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(stop_loss_limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(remaining_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
@@ -1249,7 +1251,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(take_profit_limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(remaining_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
@@ -1380,7 +1382,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:08Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(higher_stop_loss, consistency: :strong)
@@ -1431,7 +1433,7 @@ defmodule Exchange.OrderbookTest do
       }
 
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(stop_limit, consistency: :strong)
 
     refute_receive_event(Exchange.Commanded, OrderExpired,

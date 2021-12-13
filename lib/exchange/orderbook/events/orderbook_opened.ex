@@ -1,9 +1,13 @@
 defmodule Exchange.Orderbook.OrderbookOpened do
   @derive Jason.Encoder
   @enforce_keys [
-    :symbol
+    :symbol,
+    :quote_asset,
+    :base_asset
   ]
   defstruct [
-    :symbol
+    :symbol,
+    :quote_asset,
+    :base_asset
   ]
 end

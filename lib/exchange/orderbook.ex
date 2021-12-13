@@ -33,6 +33,8 @@ defmodule Exchange.Orderbook do
   @derive Jason.Encoder
   defstruct [
     symbol: nil,
+    base_asset: nil,
+    quote_asset: nil,
     orders: %{},
     last_trade_price: nil
   ]
@@ -111,9 +113,14 @@ defmodule Exchange.Orderbook do
     {:error, :invalid_order}
   end
 
-  def execute(%__MODULE__{symbol: nil}, %OpenOrderbook{symbol: symbol}) when is_symbol(symbol) do
+  def execute(
+    %__MODULE__{symbol: nil},
+    %OpenOrderbook{symbol: symbol, base_asset: ba, quote_asset: qa})
+  when is_symbol(symbol)
+    and is_symbol(ba)
+    and is_symbol(qa) do
     if String.valid?(symbol) do
-      %OrderbookOpened{symbol: symbol}
+      %OrderbookOpened{symbol: symbol, base_asset: ba, quote_asset: qa}
     else
       {:error, :invalid_symbol}
     end
@@ -219,8 +226,8 @@ defmodule Exchange.Orderbook do
 
   # State Mutators
 
-  def apply(ob, %OrderbookOpened{symbol: symbol}) do
-    %{ob | symbol: symbol}
+  def apply(ob, %OrderbookOpened{symbol: symbol, base_asset: ba, quote_asset: qa}) do
+    %{ob | symbol: symbol, base_asset: ba, quote_asset: qa}
   end
 
   def apply(ob, %OrderPlaced{} = order) do

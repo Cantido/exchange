@@ -11,10 +11,12 @@ defmodule ExchangeWeb.SymbolController do
     render(conn, conn: conn, changeset: Ecto.Changeset.change(%Exchange.Orderbook.Schema.Symbol{}))
   end
 
-  def create(conn, %{"symbol" => %{"symbol" => symbol}}) do
+  def create(conn, %{"symbol" => %{"symbol" => symbol, "base_asset" => base_asset, "quote_asset" => quote_asset}}) do
     Exchange.Commanded.dispatch(
       %Exchange.Orderbook.OpenOrderbook{
-        symbol: symbol
+        symbol: symbol,
+        base_asset: base_asset,
+        quote_asset: quote_asset
       }
     )
     conn

@@ -8,6 +8,7 @@ defmodule Exchange.Router do
 
   dispatch [
       Orderbook.OpenOrderbook,
+      Orderbook.RequestOrder,
       Orderbook.PlaceOrder
     ],
     to: Orderbook
@@ -15,7 +16,10 @@ defmodule Exchange.Router do
   dispatch [
     Account.Commands.CreateAccount,
     Account.Commands.DebitAccount,
-    Account.Commands.CreditAccount
+    Account.Commands.CreditAccount,
+    Account.Commands.LockFunds,
+    Account.Commands.DeductLockedFunds,
+    Account.Commands.UnlockFunds
   ],
   to: Account
 end

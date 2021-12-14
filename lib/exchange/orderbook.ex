@@ -4,6 +4,8 @@ defmodule Exchange.Orderbook do
   """
   alias Exchange.Orderbook.Order
   alias Exchange.Orderbook.Trade
+  alias Exchange.Orderbook.RequestOrder
+  alias Exchange.Orderbook.OrderRequested
   alias Exchange.Orderbook.PlaceOrder
   alias Exchange.Orderbook.OpenOrderbook
   alias Exchange.Orderbook.OrderbookOpened
@@ -135,6 +137,21 @@ defmodule Exchange.Orderbook do
     {:error, :orderbook_not_opened}
   end
 
+  def execute(%__MODULE__{} = ob, %RequestOrder{} = command) do
+    %OrderRequested{
+      account_id: command.account_id,
+      order_id: command.order_id,
+      symbol: ob.symbol,
+      base_asset: ob.base_asset,
+      quote_asset: ob.quote_asset,
+      price: command.price,
+      quantity: command.quantity,
+      side: command.side,
+      type: command.type,
+      timestamp: command.timestamp
+    }
+  end
+
   def execute(ob, %PlaceOrder{} = command) do
     with :ok <- validate_place_order_command(command) do
       ob
@@ -262,5 +279,9 @@ defmodule Exchange.Orderbook do
       end)
     end)
     |> Map.put(:last_trade_price, trade.price)
+  end
+
+  def apply(ob, %OrderRequested{}) do
+    ob
   end
 end

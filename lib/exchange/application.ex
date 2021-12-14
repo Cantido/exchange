@@ -7,6 +7,7 @@ defmodule Exchange.Application do
     children = [
       Exchange.Repo,
       Exchange.Commanded,
+      Exchange.OrderPlacement,
       Exchange.Orderbook.TradeProjector,
       Exchange.Orderbook.OrderProjector,
       Exchange.Orderbook.SymbolProjector,

@@ -15,12 +15,12 @@ defmodule Exchange.OrderbookTest do
   doctest Exchange.Orderbook
 
   test "open orderbook" do
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"})
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC})
 
     assert_receive_event(Exchange.Commanded, OrderbookOpened, fn event ->
-      assert event.symbol == "BTCUSDT"
-      assert event.base_asset == "BTC"
-      assert event.quote_asset == "USDT"
+      assert event.symbol == "BTCUSDC"
+      assert event.base_asset == :BTC
+      assert event.quote_asset == :USDC
     end)
   end
 
@@ -31,7 +31,7 @@ defmodule Exchange.OrderbookTest do
 
     command =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "first command ID",
         type: :limit,
         side: side,
@@ -41,7 +41,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(command, consistency: :strong)
 
     assert_receive_event(Exchange.Commanded, OrderPlaced, fn placed ->
@@ -57,7 +57,7 @@ defmodule Exchange.OrderbookTest do
   test "placing an order returns an error when the orderbook hasn't been opened yet" do
     command =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "first command ID",
         type: :limit,
         side: :buy,
@@ -78,7 +78,7 @@ defmodule Exchange.OrderbookTest do
 
     first_command =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "first command ID",
         type: :limit,
         side: first_side,
@@ -96,7 +96,7 @@ defmodule Exchange.OrderbookTest do
 
     second_command =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "second command ID",
         type: :limit,
         side: second_side,
@@ -106,7 +106,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_command, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(second_command, consistency: :strong)
 
@@ -125,8 +125,8 @@ defmodule Exchange.OrderbookTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn executed ->
       assert executed.sell_order_id == sell_id
       assert executed.buy_order_id == buy_id
-      assert executed.base_asset == "BTC"
-      assert executed.quote_asset == "USDT"
+      assert executed.base_asset == :BTC
+      assert executed.quote_asset == :USDC
       assert executed.price == price
       assert executed.quantity == available_quantity
       assert executed.maker == maker
@@ -145,7 +145,7 @@ defmodule Exchange.OrderbookTest do
 
     first_command =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "first command ID",
         type: :limit,
         side: first_side,
@@ -163,7 +163,7 @@ defmodule Exchange.OrderbookTest do
 
     second_command =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "second command ID",
         type: :limit,
         side: second_side,
@@ -173,7 +173,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_command, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(second_command, consistency: :strong)
 
@@ -192,14 +192,14 @@ defmodule Exchange.OrderbookTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn trade ->
       assert trade.sell_order_id == sell_command.order_id
       assert trade.buy_order_id == buy_command.order_id
-      assert trade.base_asset == "BTC"
-      assert trade.quote_asset == "USDT"
+      assert trade.base_asset == :BTC
+      assert trade.quote_asset == :USDC
       assert trade.price == price
       assert trade.quantity == wanted_quantity
       assert trade.maker == maker
     end)
 
-    ob = Aggregate.aggregate_state(Exchange.Commanded, Orderbook, "BTCUSDT")
+    ob = Aggregate.aggregate_state(Exchange.Commanded, Orderbook, "BTCUSDC")
 
     [{_, remaining_order}] = Map.to_list(ob.orders)
 
@@ -218,7 +218,7 @@ defmodule Exchange.OrderbookTest do
 
     first_command =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "first command ID",
         type: :limit,
         side: first_side,
@@ -236,7 +236,7 @@ defmodule Exchange.OrderbookTest do
 
     second_command =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "second command ID",
         type: :limit,
         side: second_side,
@@ -246,7 +246,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_command, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(second_command, consistency: :strong)
 
@@ -254,7 +254,7 @@ defmodule Exchange.OrderbookTest do
       assert expired.order_id == second_command.order_id
     end)
 
-    ob = Aggregate.aggregate_state(Exchange.Commanded, Orderbook, "BTCUSDT")
+    ob = Aggregate.aggregate_state(Exchange.Commanded, Orderbook, "BTCUSDC")
 
     [{_, remaining_order}] = Map.to_list(ob.orders)
 
@@ -275,7 +275,7 @@ defmodule Exchange.OrderbookTest do
 
     first_command =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "first command ID",
         type: :limit,
         side: first_side,
@@ -287,7 +287,7 @@ defmodule Exchange.OrderbookTest do
 
     second_command =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "second command ID",
         type: :limit,
         side: second_side,
@@ -297,7 +297,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_command, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(second_command, consistency: :strong)
 
@@ -316,8 +316,8 @@ defmodule Exchange.OrderbookTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn trade ->
       assert trade.sell_order_id == sell_command.order_id
       assert trade.buy_order_id == buy_command.order_id
-      assert trade.base_asset == "BTC"
-      assert trade.quote_asset == "USDT"
+      assert trade.base_asset == :BTC
+      assert trade.quote_asset == :USDC
       assert trade.price == price
       assert trade.quantity == available_quantity
       assert trade.maker == maker
@@ -332,7 +332,7 @@ defmodule Exchange.OrderbookTest do
       assert filled.order_id == first_command.order_id
     end)
 
-    ob = Aggregate.aggregate_state(Exchange.Commanded, Orderbook, "BTCUSDT")
+    ob = Aggregate.aggregate_state(Exchange.Commanded, Orderbook, "BTCUSDC")
 
     assert Enum.empty?(ob.orders)
   end
@@ -351,7 +351,7 @@ defmodule Exchange.OrderbookTest do
 
     first_command =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "first command ID",
         type: :limit,
         side: first_side,
@@ -363,7 +363,7 @@ defmodule Exchange.OrderbookTest do
 
     second_command =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "second command ID",
         type: :market,
         side: second_side,
@@ -373,7 +373,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_command, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(second_command, consistency: :strong)
 
@@ -404,8 +404,8 @@ defmodule Exchange.OrderbookTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn trade ->
       assert trade.sell_order_id == sell_command.order_id
       assert trade.buy_order_id == buy_command.order_id
-      assert trade.base_asset == "BTC"
-      assert trade.quote_asset == "USDT"
+      assert trade.base_asset == :BTC
+      assert trade.quote_asset == :USDC
       assert trade.price == price
       assert trade.quantity == available_quantity
       assert trade.maker == maker
@@ -419,7 +419,7 @@ defmodule Exchange.OrderbookTest do
       assert filled.order_id == first_command.order_id
     end)
 
-    ob = Aggregate.aggregate_state(Exchange.Commanded, Orderbook, "BTCUSDT")
+    ob = Aggregate.aggregate_state(Exchange.Commanded, Orderbook, "BTCUSDC")
 
     assert Enum.empty?(ob.orders)
   end
@@ -430,7 +430,7 @@ defmodule Exchange.OrderbookTest do
 
     order =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "order command ID",
         type: :market,
         side: side,
@@ -440,7 +440,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:00Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(order, consistency: :strong)
 
     assert_receive_event(Exchange.Commanded, OrderPlaced, fn placed ->
@@ -456,7 +456,7 @@ defmodule Exchange.OrderbookTest do
       assert expired.order_id == order.order_id
     end)
 
-    ob = Aggregate.aggregate_state(Exchange.Commanded, Orderbook, "BTCUSDT")
+    ob = Aggregate.aggregate_state(Exchange.Commanded, Orderbook, "BTCUSDC")
 
     assert Enum.empty?(ob.orders)
   end
@@ -467,7 +467,7 @@ defmodule Exchange.OrderbookTest do
 
     lower_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "lower buy command ID",
         type: :limit,
         side: :buy,
@@ -478,7 +478,7 @@ defmodule Exchange.OrderbookTest do
       }
     higher_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "higher buy command ID",
         type: :limit,
         side: :buy,
@@ -490,7 +490,7 @@ defmodule Exchange.OrderbookTest do
 
     market_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "market sell command ID",
         type: :market,
         side: :sell,
@@ -500,7 +500,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:01Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(higher_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(lower_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(market_sell, consistency: :strong)
@@ -519,8 +519,8 @@ defmodule Exchange.OrderbookTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn trade ->
       assert trade.sell_order_id == market_sell.order_id
       assert trade.buy_order_id == higher_buy.order_id
-      assert trade.base_asset == "BTC"
-      assert trade.quote_asset == "USDT"
+      assert trade.base_asset == :BTC
+      assert trade.quote_asset == :USDC
       assert trade.price == higher_buy.price
       assert trade.quantity == quantity
     end)
@@ -548,7 +548,7 @@ defmodule Exchange.OrderbookTest do
 
     lower_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "lower sell command ID",
         type: :limit,
         side: :sell,
@@ -559,7 +559,7 @@ defmodule Exchange.OrderbookTest do
       }
     higher_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "higher sell command ID",
         type: :limit,
         side: :sell,
@@ -571,7 +571,7 @@ defmodule Exchange.OrderbookTest do
 
     market_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "market buy ID",
         type: :market,
         side: :buy,
@@ -581,7 +581,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(lower_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(higher_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(market_buy, consistency: :strong)
@@ -600,8 +600,8 @@ defmodule Exchange.OrderbookTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn trade ->
       assert trade.buy_order_id == market_buy.order_id
       assert trade.sell_order_id == lower_sell.order_id
-      assert trade.base_asset == "BTC"
-      assert trade.quote_asset == "USDT"
+      assert trade.base_asset == :BTC
+      assert trade.quote_asset == :USDC
       assert trade.price == lower_sell.price
       assert trade.quantity == quantity
     end)
@@ -632,7 +632,7 @@ defmodule Exchange.OrderbookTest do
 
     stop_limit_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "stop limit order ID",
         type: :stop_loss,
         side: :sell,
@@ -643,7 +643,7 @@ defmodule Exchange.OrderbookTest do
 
     remaining_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "order the stop limit should buy ID",
         type: :limit,
         side: :buy,
@@ -655,7 +655,7 @@ defmodule Exchange.OrderbookTest do
 
     first_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "First buy ID",
         type: :limit,
         side: :buy,
@@ -667,7 +667,7 @@ defmodule Exchange.OrderbookTest do
 
     first_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "First sell ID",
         type: :limit,
         side: :sell,
@@ -677,7 +677,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(stop_limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(remaining_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
@@ -690,8 +690,8 @@ defmodule Exchange.OrderbookTest do
       fn stop_limit_trade ->
         assert stop_limit_trade.sell_order_id == stop_limit_sell.order_id
         assert stop_limit_trade.buy_order_id == remaining_buy.order_id
-        assert stop_limit_trade.base_asset == "BTC"
-        assert stop_limit_trade.quote_asset == "USDT"
+        assert stop_limit_trade.base_asset == :BTC
+        assert stop_limit_trade.quote_asset == :USDC
         assert stop_limit_trade.price == remaining_buy.price
         assert stop_limit_trade.quantity == quantity
       end)
@@ -706,7 +706,7 @@ defmodule Exchange.OrderbookTest do
 
     stop_limit_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "stop limit order ID",
         type: :stop_loss,
         side: :buy,
@@ -717,7 +717,7 @@ defmodule Exchange.OrderbookTest do
 
     remaining_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "order the stop limit should buy ID",
         type: :limit,
         side: :sell,
@@ -729,7 +729,7 @@ defmodule Exchange.OrderbookTest do
 
     first_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "First buy ID",
         type: :limit,
         side: :buy,
@@ -741,7 +741,7 @@ defmodule Exchange.OrderbookTest do
 
     first_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "First sell ID",
         type: :limit,
         side: :sell,
@@ -751,7 +751,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(stop_limit_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(remaining_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
@@ -764,8 +764,8 @@ defmodule Exchange.OrderbookTest do
       fn stop_limit_trade ->
         assert stop_limit_trade.sell_order_id == remaining_sell.order_id
         assert stop_limit_trade.buy_order_id == stop_limit_buy.order_id
-        assert stop_limit_trade.base_asset == "BTC"
-        assert stop_limit_trade.quote_asset == "USDT"
+        assert stop_limit_trade.base_asset == :BTC
+        assert stop_limit_trade.quote_asset == :USDC
         assert stop_limit_trade.price == remaining_sell.price
         assert stop_limit_trade.quantity == quantity
       end)
@@ -778,7 +778,7 @@ defmodule Exchange.OrderbookTest do
 
     take_profit_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "take profit sell command ID",
         type: :take_profit,
         side: :sell,
@@ -789,7 +789,7 @@ defmodule Exchange.OrderbookTest do
 
     remaining_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "buy order that the take profit should match",
         type: :limit,
         side: :buy,
@@ -801,7 +801,7 @@ defmodule Exchange.OrderbookTest do
 
     first_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "buy order that should set the price for the take-profit sell",
         type: :limit,
         side: :buy,
@@ -813,7 +813,7 @@ defmodule Exchange.OrderbookTest do
 
     first_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "sell order that should set the price for the take-profit sell",
         type: :limit,
         side: :sell,
@@ -823,7 +823,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(take_profit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(remaining_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
@@ -836,8 +836,8 @@ defmodule Exchange.OrderbookTest do
       fn take_profit_trade ->
         assert take_profit_trade.sell_order_id == take_profit_sell.order_id
         assert take_profit_trade.buy_order_id == remaining_buy.order_id
-        assert take_profit_trade.base_asset == "BTC"
-        assert take_profit_trade.quote_asset == "USDT"
+        assert take_profit_trade.base_asset == :BTC
+        assert take_profit_trade.quote_asset == :USDC
         assert take_profit_trade.price == remaining_buy.price
         assert take_profit_trade.quantity == quantity
       end)
@@ -852,7 +852,7 @@ defmodule Exchange.OrderbookTest do
 
     take_profit_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "take profit sell command ID",
         type: :take_profit,
         side: :buy,
@@ -863,7 +863,7 @@ defmodule Exchange.OrderbookTest do
 
     remaining_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "buy order that the take profit should match",
         type: :limit,
         side: :sell,
@@ -875,7 +875,7 @@ defmodule Exchange.OrderbookTest do
 
     first_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "buy order that should set the price for the take-profit sell",
         type: :limit,
         side: :buy,
@@ -887,7 +887,7 @@ defmodule Exchange.OrderbookTest do
 
     first_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "sell order that should set the price for the take-profit sell",
         type: :limit,
         side: :sell,
@@ -897,7 +897,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(take_profit_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(remaining_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
@@ -910,8 +910,8 @@ defmodule Exchange.OrderbookTest do
       fn take_profit_trade ->
         assert take_profit_trade.sell_order_id == remaining_sell.order_id
         assert take_profit_trade.buy_order_id == take_profit_buy.order_id
-        assert take_profit_trade.base_asset == "BTC"
-        assert take_profit_trade.quote_asset == "USDT"
+        assert take_profit_trade.base_asset == :BTC
+        assert take_profit_trade.quote_asset == :USDC
         assert take_profit_trade.price == remaining_sell.price
         assert take_profit_trade.quantity == quantity
       end)
@@ -929,7 +929,7 @@ defmodule Exchange.OrderbookTest do
 
     intial_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "First buy that triggers the first stop order",
         type: :limit,
         side: :buy,
@@ -941,7 +941,7 @@ defmodule Exchange.OrderbookTest do
 
     initial_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "First sell that triggers the first stop order",
         type: :limit,
         side: :sell,
@@ -956,7 +956,7 @@ defmodule Exchange.OrderbookTest do
 
     first_stop_limit_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "stop limit sell that gets executed first",
         type: :stop_loss,
         side: :sell,
@@ -967,7 +967,7 @@ defmodule Exchange.OrderbookTest do
 
     buy_for_first_stop =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "Order that the first stop should buy",
         type: :limit,
         side: :buy,
@@ -981,7 +981,7 @@ defmodule Exchange.OrderbookTest do
 
     second_stop_limit_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "stop limit sell that gets executed second",
         type: :stop_loss,
         side: :sell,
@@ -992,7 +992,7 @@ defmodule Exchange.OrderbookTest do
 
     buy_for_second_stop =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "Order that the second stop should buy",
         type: :limit,
         side: :buy,
@@ -1002,7 +1002,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:05Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_stop_limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(second_stop_limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(buy_for_first_stop, consistency: :strong)
@@ -1017,8 +1017,8 @@ defmodule Exchange.OrderbookTest do
       fn trade ->
         assert trade.sell_order_id == first_stop_limit_sell.order_id
         assert trade.buy_order_id == buy_for_first_stop.order_id
-        assert trade.base_asset == "BTC"
-        assert trade.quote_asset == "USDT"
+        assert trade.base_asset == :BTC
+        assert trade.quote_asset == :USDC
         assert trade.price == first_stop_trade_price
         assert trade.quantity == quantity
       end)
@@ -1030,8 +1030,8 @@ defmodule Exchange.OrderbookTest do
       fn trade ->
         assert trade.sell_order_id == second_stop_limit_sell.order_id
         assert trade.buy_order_id == buy_for_second_stop.order_id
-        assert trade.base_asset == "BTC"
-        assert trade.quote_asset == "USDT"
+        assert trade.base_asset == :BTC
+        assert trade.quote_asset == :USDC
         assert trade.price == second_stop_trade_price
         assert trade.quantity == quantity
       end)
@@ -1044,7 +1044,7 @@ defmodule Exchange.OrderbookTest do
 
     stop_limit_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "stop limit order that should be left alone",
         type: :stop_loss,
         side: :sell,
@@ -1055,7 +1055,7 @@ defmodule Exchange.OrderbookTest do
 
     limit_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "order that the market order should buy",
         type: :limit,
         side: :sell,
@@ -1067,7 +1067,7 @@ defmodule Exchange.OrderbookTest do
 
     market_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "The order that should buy the limit sell",
         type: :market,
         side: :buy,
@@ -1075,7 +1075,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(stop_limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(market_buy, consistency: :strong)
@@ -1087,8 +1087,8 @@ defmodule Exchange.OrderbookTest do
       fn trade ->
         assert trade.sell_order_id == limit_sell.order_id
         assert trade.buy_order_id == market_buy.order_id
-        assert trade.base_asset == "BTC"
-        assert trade.quote_asset == "USDT"
+        assert trade.base_asset == :BTC
+        assert trade.quote_asset == :USDC
         assert trade.price == market_price
         assert trade.quantity == quantity
       end)
@@ -1101,7 +1101,7 @@ defmodule Exchange.OrderbookTest do
 
     take_profit_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "stop limit order that should be left alone",
         type: :take_profit,
         side: :buy,
@@ -1112,7 +1112,7 @@ defmodule Exchange.OrderbookTest do
 
     limit_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "order that the market order should buy",
         type: :limit,
         side: :buy,
@@ -1124,7 +1124,7 @@ defmodule Exchange.OrderbookTest do
 
     market_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "The order that should buy the limit sell",
         type: :market,
         side: :sell,
@@ -1132,7 +1132,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:02Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(take_profit_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(limit_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(market_sell, consistency: :strong)
@@ -1144,8 +1144,8 @@ defmodule Exchange.OrderbookTest do
       fn trade ->
         assert trade.sell_order_id == market_sell.order_id
         assert trade.buy_order_id == limit_buy.order_id
-        assert trade.base_asset == "BTC"
-        assert trade.quote_asset == "USDT"
+        assert trade.base_asset == :BTC
+        assert trade.quote_asset == :USDC
         assert trade.price == market_price
         assert trade.quantity == quantity
       end)
@@ -1159,7 +1159,7 @@ defmodule Exchange.OrderbookTest do
 
     stop_loss_limit_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "stop-loss-limit order",
         type: :stop_loss_limit,
         side: :sell,
@@ -1172,7 +1172,7 @@ defmodule Exchange.OrderbookTest do
 
     remaining_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "buy order that the stop-loss-limit should match",
         type: :limit,
         side: :buy,
@@ -1184,7 +1184,7 @@ defmodule Exchange.OrderbookTest do
 
     first_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "buy order that triggers the stop-loss-limit sell",
         type: :limit,
         side: :buy,
@@ -1196,7 +1196,7 @@ defmodule Exchange.OrderbookTest do
 
     first_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "sell order that triggers the stop-loss-limit sell",
         type: :limit,
         side: :sell,
@@ -1206,7 +1206,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(stop_loss_limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(remaining_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
@@ -1219,8 +1219,8 @@ defmodule Exchange.OrderbookTest do
       fn trade ->
         assert trade.sell_order_id == stop_loss_limit_sell.order_id
         assert trade.buy_order_id == remaining_buy.order_id
-        assert trade.base_asset == "BTC"
-        assert trade.quote_asset == "USDT"
+        assert trade.base_asset == :BTC
+        assert trade.quote_asset == :USDC
         assert trade.price == stop_price
         assert trade.quantity == quantity
       end)
@@ -1234,7 +1234,7 @@ defmodule Exchange.OrderbookTest do
 
     take_profit_limit_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "take-profit-limit order",
         type: :take_profit_limit,
         side: :sell,
@@ -1247,7 +1247,7 @@ defmodule Exchange.OrderbookTest do
 
     remaining_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "buy order that the take-profit-limit should match",
         type: :limit,
         side: :buy,
@@ -1259,7 +1259,7 @@ defmodule Exchange.OrderbookTest do
 
     first_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "buy order that triggers the take-profit-limit sell",
         type: :limit,
         side: :buy,
@@ -1271,7 +1271,7 @@ defmodule Exchange.OrderbookTest do
 
     first_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "sell order that triggers the take-profit-limit sell",
         type: :limit,
         side: :sell,
@@ -1281,7 +1281,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:03Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(take_profit_limit_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(remaining_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
@@ -1294,8 +1294,8 @@ defmodule Exchange.OrderbookTest do
       fn trade ->
         assert trade.sell_order_id == take_profit_limit_sell.order_id
         assert trade.buy_order_id == remaining_buy.order_id
-        assert trade.base_asset == "BTC"
-        assert trade.quote_asset == "USDT"
+        assert trade.base_asset == :BTC
+        assert trade.quote_asset == :USDC
         assert trade.price == stop_price
         assert trade.quantity == quantity
       end)
@@ -1311,7 +1311,7 @@ defmodule Exchange.OrderbookTest do
     # first sell order that will set the initial price
     first_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "00000000-0000-0000-0000-000000000001",
         type: :limit,
         side: :sell,
@@ -1324,7 +1324,7 @@ defmodule Exchange.OrderbookTest do
     # first buy order that will set the initial price
     first_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "00000000-0000-0000-0000-000000000002",
         type: :limit,
         side: :buy,
@@ -1337,7 +1337,7 @@ defmodule Exchange.OrderbookTest do
     # stop loss triggered by the first drop
     higher_stop_loss =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "00000000-0000-0000-0000-000000000003",
         type: :stop_loss_limit,
         side: :sell,
@@ -1351,7 +1351,7 @@ defmodule Exchange.OrderbookTest do
     # buy order that the stop-loss-limit should match
     higher_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "00000000-0000-0000-0000-000000000004",
         type: :limit,
         side: :buy,
@@ -1364,7 +1364,7 @@ defmodule Exchange.OrderbookTest do
     # stop loss triggered by the drop caused by the first stop loss
     lower_stop_loss =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "00000000-0000-0000-0000-000000000005",
         type: :stop_loss_limit,
         side: :sell,
@@ -1378,7 +1378,7 @@ defmodule Exchange.OrderbookTest do
     # buy order that the lower stop-loss-limit should match
     lower_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "00000000-0000-0000-0000-000000000006",
         type: :limit,
         side: :buy,
@@ -1391,7 +1391,7 @@ defmodule Exchange.OrderbookTest do
     # sell order that will set this whole thing into motion
     second_sell =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "00000000-0000-0000-0000-000000000007",
         type: :limit,
         side: :sell,
@@ -1404,7 +1404,7 @@ defmodule Exchange.OrderbookTest do
     # buy order that will set this whole thing into motion
     second_buy =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "00000000-0000-0000-0000-000000000008",
         type: :limit,
         side: :buy,
@@ -1414,7 +1414,7 @@ defmodule Exchange.OrderbookTest do
         timestamp: ~U[2021-07-26T12:00:08Z]
       }
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_sell, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(first_buy, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(higher_stop_loss, consistency: :strong)
@@ -1440,7 +1440,7 @@ defmodule Exchange.OrderbookTest do
     # This order should sit on the books and will be checked for a match after every order
     stop_limit =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "00000000-0000-0000-0000-000000000002",
         type: :take_profit,
         side: :sell,
@@ -1454,7 +1454,7 @@ defmodule Exchange.OrderbookTest do
     # A market order that should expire, but it will still trigger order matching
     expiring_market =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: "00000000-0000-0000-0000-000000000001",
         type: :market,
         side: :sell,
@@ -1465,7 +1465,7 @@ defmodule Exchange.OrderbookTest do
       }
 
 
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(stop_limit, consistency: :strong)
 
     refute_receive_event(Exchange.Commanded, OrderExpired,

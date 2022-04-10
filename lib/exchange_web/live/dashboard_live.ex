@@ -28,7 +28,7 @@ defmodule ExchangeWeb.DashboardLive do
       },
       consistency: :strong
     )
-    {:noreply, load(socket, "BTCUSDT")}
+    {:noreply, load(socket, "BTCUSDC")}
   end
 
   def handle_info({:events, events}, socket) do

@@ -15,10 +15,6 @@ defmodule Exchange.Orderbook do
   alias Exchange.Orderbook.TradeExecuted
   alias Commanded.Aggregate.Multi
 
-  defguard is_symbol(symbol) when
-    is_binary(symbol) and
-    byte_size(symbol) >= 1
-
   defguard is_time_in_force(tif) when
     not is_nil(tif) and (
       tif == :good_til_cancelled or
@@ -117,10 +113,7 @@ defmodule Exchange.Orderbook do
 
   def execute(
     %__MODULE__{symbol: nil},
-    %OpenOrderbook{symbol: symbol, base_asset: ba, quote_asset: qa})
-  when is_symbol(symbol)
-    and is_symbol(ba)
-    and is_symbol(qa) do
+    %OpenOrderbook{symbol: symbol, base_asset: ba, quote_asset: qa}) do
     if String.valid?(symbol) do
       %OrderbookOpened{symbol: symbol, base_asset: ba, quote_asset: qa}
     else

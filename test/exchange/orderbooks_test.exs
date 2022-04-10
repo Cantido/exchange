@@ -4,12 +4,12 @@ defmodule Exchange.OrderbooksTest do
   doctest Exchange.Orderbooks
 
   test "trades returns the last 500 trades" do
-    Exchange.Repo.insert(%Exchange.Orderbook.Schema.Symbol{symbol: "BTCUSDT"})
+    Exchange.Repo.insert(%Exchange.Orderbook.Schema.Symbol{symbol: "BTCUSDC"})
 
     trades_to_insert =
       Enum.map(1..510, fn i ->
         [
-          symbol: "BTCUSDT",
+          symbol: "BTCUSDC",
           sell_order_id: UUID.uuid4(),
           buy_order_id: UUID.uuid4(),
           price: i,
@@ -21,7 +21,7 @@ defmodule Exchange.OrderbooksTest do
 
     Exchange.Repo.insert_all(Exchange.Orderbook.Schema.Trade, trades_to_insert)
 
-    trades = Orderbooks.trades("BTCUSDT")
+    trades = Orderbooks.trades("BTCUSDC")
 
     assert Enum.count(trades) == 500
     expected_first_timestamp = DateTime.add(~U[2021-07-26T12:00:00.000000Z], 510, :second)
@@ -32,12 +32,12 @@ defmodule Exchange.OrderbooksTest do
   end
 
   test "klines returns valid candlesticks" do
-    Exchange.Repo.insert(%Exchange.Orderbook.Schema.Symbol{symbol: "BTCUSDT"})
+    Exchange.Repo.insert(%Exchange.Orderbook.Schema.Symbol{symbol: "BTCUSDC"})
 
     trades_to_insert =
       Enum.map(1..119, fn i ->
         [
-          symbol: "BTCUSDT",
+          symbol: "BTCUSDC",
           sell_order_id: UUID.uuid4(),
           buy_order_id: UUID.uuid4(),
           price: i,
@@ -51,7 +51,7 @@ defmodule Exchange.OrderbooksTest do
 
     candles =
       Orderbooks.klines(
-        "BTCUSDT", :"1m",
+        "BTCUSDC", :"1m",
         start_time: ~U[2021-07-26T12:00:01.000000Z],
         end_time: ~U[2021-07-26T12:01:59.000000Z]
       )

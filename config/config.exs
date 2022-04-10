@@ -20,6 +20,12 @@ config :exchange, ExchangeWeb.Endpoint,
   pubsub_server: Exchange.PubSub,
   live_view: [signing_salt: "HzHnAWSK"]
 
+config :money,
+  custom_currencies: [
+    BTC: %{name: "Bitcoin", symbol: "₿", exponent: 8},
+    USDC: %{name: "USD Coin", symbol: "$", exponent: 2},
+  ]
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",

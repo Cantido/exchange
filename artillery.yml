@@ -13,7 +13,7 @@ scenarios:
   - name: Place order
     flow:
       - post:
-          url: "/symbols/BTCUSDT/orders"
+          url: "/symbols/BTCUSDC/orders"
           json:
             side: "{{ side }}"
             price: "{{ price }}"

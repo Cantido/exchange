@@ -35,7 +35,7 @@ defmodule Exchange.OrderPlacementTest do
 
     make_market =
       %PlaceOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         order_id: maker_order_id,
         type: :limit,
         side: :sell,
@@ -47,7 +47,7 @@ defmodule Exchange.OrderPlacementTest do
 
     request_order =
       %RequestOrder{
-        symbol: "BTCUSDT",
+        symbol: "BTCUSDC",
         account_id: account_id,
         order_id: taker_order_id,
         type: :limit,
@@ -59,8 +59,8 @@ defmodule Exchange.OrderPlacementTest do
       }
 
     :ok = Exchange.Commanded.dispatch(%CreateAccount{account_id: account_id}, consistency: :strong)
-    :ok = Exchange.Commanded.dispatch(%DebitAccount{account_id: account_id, amount: wanted_quantity, asset: "USDT"}, consistency: :strong)
-    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDT", base_asset: "BTC", quote_asset: "USDT"}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%DebitAccount{account_id: account_id, amount: wanted_quantity, asset: :USDC}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(make_market, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(request_order, consistency: :strong)
 
@@ -83,8 +83,8 @@ defmodule Exchange.OrderPlacementTest do
     assert_receive_event(Exchange.Commanded, TradeExecuted, fn executed ->
       assert executed.sell_order_id == maker_order_id
       assert executed.buy_order_id == taker_order_id
-      assert executed.base_asset == "BTC"
-      assert executed.quote_asset == "USDT"
+      assert executed.base_asset == :BTC
+      assert executed.quote_asset == :USDC
       assert executed.price == price
       assert executed.quantity == wanted_quantity
       assert executed.maker == :seller

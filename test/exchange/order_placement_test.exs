@@ -59,7 +59,7 @@ defmodule Exchange.OrderPlacementTest do
       }
 
     :ok = Exchange.Commanded.dispatch(%CreateAccount{account_id: account_id}, consistency: :strong)
-    :ok = Exchange.Commanded.dispatch(%DebitAccount{account_id: account_id, amount: wanted_quantity}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%DebitAccount{account_id: account_id, amount: price}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(make_market, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(request_order, consistency: :strong)

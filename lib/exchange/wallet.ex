@@ -65,7 +65,7 @@ defmodule Exchange.Wallet do
   def lock(%__MODULE__{balances: balances, locks: locks} = wallet, order_id, money) do
     current_balance = get_balance(wallet, money.currency)
 
-    unless Money.cmp(current_balance, money) == :gt do
+    unless sufficient_balance?(wallet, money) do
       raise "insufficient balance to lock"
     end
     if locked_by?(wallet, order_id) do

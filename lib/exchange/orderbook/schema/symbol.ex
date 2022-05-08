@@ -5,7 +5,7 @@ defmodule Exchange.Orderbook.Schema.Symbol do
   @primary_key false
   @foreign_key_type :binary_id
   schema "symbols" do
-    field :symbol, :string, primary_key: true, null: false
+    field :symbol, :string, primary_key: true
     timestamps()
   end
 

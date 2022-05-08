@@ -18,7 +18,7 @@ defmodule Exchange.Wallet do
   def subtract(%__MODULE__{balances: balances} = wallet, money) do
     current_balance = get_balance(wallet, money.currency)
 
-    if Money.cmp(current_balance, money) == :gt do
+    if sufficient_balance?(wallet, money) do
       new_balances =
         Map.update(balances, money.currency, money, &Money.subtract(&1, money))
 
@@ -46,11 +46,16 @@ defmodule Exchange.Wallet do
       true
 
       iex> Wallet.new()
+      ...> |> Wallet.add(Money.new(5, :BTC))
+      ...> |> Wallet.sufficient_balance?(Money.new(5, :BTC))
+      true
+
+      iex> Wallet.new()
       ...> |> Wallet.sufficient_balance?(Money.new(2, :BTC))
       false
   """
   def sufficient_balance?(wallet, money) do
-    Money.cmp(get_balance(wallet, money.currency), money) == :gt
+    Money.cmp(get_balance(wallet, money.currency), money) in [:gt, :eq]
   end
 
   def locked_by?(%__MODULE__{locks: locks}, order_id) do

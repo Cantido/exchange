@@ -85,7 +85,7 @@ defmodule Exchange.Balance do
       ...> |> Balance.add(5)
       ...> |> Balance.lock("my order", 2)
       ...> |> Balance.free()
-      3
+      %Money{amount: 3, currency: :BTC}
   """
   def lock(%__MODULE__{free: free, locks: locks} = balance, order_id, amount) do
     unless sufficient_balance?(balance, amount) do

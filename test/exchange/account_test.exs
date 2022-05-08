@@ -34,8 +34,7 @@ defmodule Exchange.AccountTest do
 
     assert_receive_event(Exchange.Commanded, AccountDebited, fn event ->
       assert event.account_id == "debit-account-id"
-      assert event.amount == 100
-      assert event.asset == "XLM"
+      assert event.amount |> Money.equals?(Money.new(100, :XLM))
     end)
   end
 
@@ -46,8 +45,7 @@ defmodule Exchange.AccountTest do
 
     assert_receive_event(Exchange.Commanded, AccountCredited, fn event ->
       assert event.account_id == "credit-account-id"
-      assert event.amount == 100
-      assert event.asset == "XLM"
+      assert event.amount |> Money.equals?(Money.new(100, :XLM))
     end)
   end
 

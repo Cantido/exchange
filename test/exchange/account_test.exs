@@ -30,7 +30,7 @@ defmodule Exchange.AccountTest do
 
   test "debit account" do
     :ok = Exchange.Commanded.dispatch(%CreateAccount{account_id: "debit-account-id"})
-    :ok = Exchange.Commanded.dispatch(%DebitAccount{account_id: "debit-account-id", amount: 100, asset: "XLM"})
+    :ok = Exchange.Commanded.dispatch(%DebitAccount{account_id: "debit-account-id", amount: Money.new(100, :XLM)})
 
     assert_receive_event(Exchange.Commanded, AccountDebited, fn event ->
       assert event.account_id == "debit-account-id"
@@ -41,8 +41,8 @@ defmodule Exchange.AccountTest do
 
   test "credit account" do
     :ok = Exchange.Commanded.dispatch(%CreateAccount{account_id: "credit-account-id"})
-    :ok = Exchange.Commanded.dispatch(%DebitAccount{account_id: "credit-account-id", amount: 100, asset: "XLM"})
-    :ok = Exchange.Commanded.dispatch(%CreditAccount{account_id: "credit-account-id", amount: 100, asset: "XLM"})
+    :ok = Exchange.Commanded.dispatch(%DebitAccount{account_id: "credit-account-id", amount: Money.new(100, :XLM)})
+    :ok = Exchange.Commanded.dispatch(%CreditAccount{account_id: "credit-account-id", amount: Money.new(100, :XLM)})
 
     assert_receive_event(Exchange.Commanded, AccountCredited, fn event ->
       assert event.account_id == "credit-account-id"
@@ -53,6 +53,6 @@ defmodule Exchange.AccountTest do
 
   test "can't credit an account when it doesn't have enough funds" do
     :ok = Exchange.Commanded.dispatch(%CreateAccount{account_id: "credit-account-id"})
-    {:error, :not_enough_funds} = Exchange.Commanded.dispatch(%CreditAccount{account_id: "credit-account-id", amount: 100, asset: "XLM"})
+    {:error, :not_enough_funds} = Exchange.Commanded.dispatch(%CreditAccount{account_id: "credit-account-id", amount: Money.new(100, :XLM)})
   end
 end

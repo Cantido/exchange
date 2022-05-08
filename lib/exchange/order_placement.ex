@@ -67,24 +67,17 @@ defmodule Exchange.OrderPlacement do
     %OrderRequested{
       account_id: account_id,
       order_id: order_id,
-      base_asset: base_asset,
-      quote_asset: quote_asset,
       price: price,
       quantity: quantity,
       side: side
     } = command
   ) do
-    asset =
-      case side do
-        :buy -> quote_asset
-        :sell -> base_asset
-      end
     amount =
       case side do
         :buy -> price
         :sell -> quantity
       end
-    %LockFunds{account_id: account_id, order_id: order_id, asset: asset, amount: amount}
+    %LockFunds{account_id: account_id, order_id: order_id, amount: amount}
   end
 
   def handle(%__MODULE__{} = pm, %FundsLocked{}) do
@@ -102,11 +95,6 @@ defmodule Exchange.OrderPlacement do
   end
 
   def handle(%__MODULE__{account_id: account_id} = pm, %OrderFilled{order_id: order_id}) do
-    debit_asset =
-      case pm.side do
-        :buy -> pm.base_asset
-        :sell -> pm.quote_asset
-      end
     debit_amount =
       case pm.side do
         :buy -> pm.quantity
@@ -114,7 +102,7 @@ defmodule Exchange.OrderPlacement do
       end
     [
       %DeductLockedFunds{account_id: account_id, order_id: order_id},
-      %DebitAccount{account_id: account_id, asset: debit_asset, amount: debit_amount}
+      %DebitAccount{account_id: account_id, amount: debit_amount}
     ]
   end
 

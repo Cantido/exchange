@@ -23,7 +23,8 @@ config :exchange, ExchangeWeb.Endpoint,
 config :money,
   custom_currencies: [
     BTC: %{name: "Bitcoin", symbol: "₿", exponent: 8},
-    USDC: %{name: "USD Coin", symbol: "$", exponent: 2},
+    USDC: %{name: "USD Coin", symbol: "$", exponent: 6},
+    XLM: %{name: "Stellar Lumen", symbol: "🚀", exponent: 7}
   ]
 
 # Configures Elixir's Logger

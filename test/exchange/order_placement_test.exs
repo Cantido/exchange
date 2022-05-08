@@ -29,9 +29,9 @@ defmodule Exchange.OrderPlacementTest do
     account_id = UUID.uuid4()
     maker_order_id = UUID.uuid4()
     taker_order_id = UUID.uuid4()
-    price = 100
-    available_quantity = 150
-    wanted_quantity = 100
+    price = Money.new(100, :USDC)
+    available_quantity = Money.new(150, :BTC)
+    wanted_quantity = Money.new(100, :BTC)
 
     make_market =
       %PlaceOrder{
@@ -59,7 +59,7 @@ defmodule Exchange.OrderPlacementTest do
       }
 
     :ok = Exchange.Commanded.dispatch(%CreateAccount{account_id: account_id}, consistency: :strong)
-    :ok = Exchange.Commanded.dispatch(%DebitAccount{account_id: account_id, amount: wanted_quantity, asset: :USDC}, consistency: :strong)
+    :ok = Exchange.Commanded.dispatch(%DebitAccount{account_id: account_id, amount: wanted_quantity}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(%OpenOrderbook{symbol: "BTCUSDC", base_asset: :BTC, quote_asset: :USDC}, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(make_market, consistency: :strong)
     :ok = Exchange.Commanded.dispatch(request_order, consistency: :strong)

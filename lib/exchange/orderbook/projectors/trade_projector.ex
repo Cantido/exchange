@@ -12,8 +12,8 @@ defmodule Exchange.Orderbook.TradeProjector do
         symbol: event.base_asset <> event.quote_asset,
         sell_order_id: event.sell_order_id,
         buy_order_id: event.buy_order_id,
-        price: event.price,
-        quantity: event.quantity,
+        price: event.price.amount,
+        quantity: event.quantity.amount,
         maker: to_existing_atom!(event.maker),
         executed_at: parse_timestamp!(event.timestamp)
       }

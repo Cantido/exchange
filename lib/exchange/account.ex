@@ -15,12 +15,12 @@ defmodule Exchange.Account do
     FundsUnlocked,
     LockedFundsDeducted
   }
-  alias Exchange.{Balance, Balances}
+  alias Exchange.Wallet
 
   @enforce_keys :id
   defstruct [
     id: nil,
-    balances: Balances.new()
+    wallet: Wallet.new()
   ]
 
   def execute(%__MODULE__{id: nil}, %CreateAccount{account_id: id}) do
@@ -31,21 +31,21 @@ defmodule Exchange.Account do
     {:error, :account_already_exists}
   end
 
-  def execute(%__MODULE__{}, %DebitAccount{account_id: id, amount: amount, asset: asset}) do
-    %AccountDebited{account_id: id, amount: amount, asset: asset}
+  def execute(%__MODULE__{}, %DebitAccount{account_id: id, amount: amount}) do
+    %AccountDebited{account_id: id, amount: amount}
   end
 
-  def execute(%__MODULE__{balances: balances}, %CreditAccount{account_id: id, amount: amount, asset: asset}) do
-    if Balances.sufficient_balance?(balances, asset, amount) do
-      %AccountCredited{account_id: id, amount: amount, asset: asset}
+  def execute(%__MODULE__{wallet: wallet}, %CreditAccount{account_id: id, amount: amount}) do
+    if Wallet.sufficient_balance?(wallet, amount) do
+      %AccountCredited{account_id: id, amount: amount}
     else
       {:error, :not_enough_funds}
     end
   end
 
-  def execute(%__MODULE__{balances: balances}, %LockFunds{account_id: id, order_id: order_id, amount: amount, asset: asset}) do
-    if Balances.sufficient_balance?(balances, asset, amount) do
-      %FundsLocked{account_id: id, order_id: order_id, amount: amount, asset: asset}
+  def execute(%__MODULE__{wallet: wallet}, %LockFunds{account_id: id, order_id: order_id, amount: amount}) do
+    if Wallet.sufficient_balance?(wallet, amount) do
+      %FundsLocked{account_id: id, order_id: order_id, amount: amount}
     else
       {:error, :not_enough_funds}
     end
@@ -55,15 +55,15 @@ defmodule Exchange.Account do
     %__MODULE__{id: id}
   end
 
-  def apply(%__MODULE__{balances: balances} = account, %AccountDebited{amount: amount, asset: asset}) do
-    %__MODULE__{account | balances: Balances.add(balances, asset, amount)}
+  def apply(%__MODULE__{wallet: wallet} = account, %AccountDebited{amount: amount}) do
+    %__MODULE__{account | wallet: Wallet.add(wallet, amount)}
   end
 
-  def apply(%__MODULE__{balances: balances} = account, %AccountCredited{amount: amount, asset: asset}) do
-    %__MODULE__{account | balances: Balances.subtract(balances, asset, amount)}
+  def apply(%__MODULE__{wallet: wallet} = account, %AccountCredited{amount: amount}) do
+    %__MODULE__{account | wallet: Wallet.subtract(wallet, amount)}
   end
 
-  def apply(%__MODULE__{balances: balances} = account, %FundsLocked{order_id: order_id, amount: amount, asset: asset}) do
-    %__MODULE__{account | balances: Balances.lock(balances, order_id, asset, amount)}
+  def apply(%__MODULE__{wallet: wallet} = account, %FundsLocked{order_id: order_id, amount: amount}) do
+    %__MODULE__{account | wallet: Wallet.lock(wallet, order_id, amount)}
   end
 end

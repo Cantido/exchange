@@ -17,13 +17,21 @@ defmodule Exchange.Orderbook.OrderProjector do
         side: to_existing_atom!(event.side),
         type: to_existing_atom!(event.type),
         time_in_force: to_existing_atom!(event.time_in_force),
-        price: event.price,
-        stop_price: event.stop_price,
-        quantity: event.quantity,
+        price: amount_or_nil(event.price),
+        stop_price: amount_or_nil(event.stop_price),
+        quantity: event.quantity.amount,
         timestamp: parse_timestamp!(event.timestamp)
       }
 
     Ecto.Multi.insert(multi, :order_projection, projection)
+  end
+
+  defp amount_or_nil(money) do
+    if is_nil(money) do
+      nil
+    else
+      money.amount
+    end
   end
 
   defp to_existing_atom!(val) when is_atom(val), do: val

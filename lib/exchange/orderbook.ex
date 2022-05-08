@@ -14,6 +14,7 @@ defmodule Exchange.Orderbook do
   alias Exchange.Orderbook.OrderExpired
   alias Exchange.Orderbook.TradeExecuted
   alias Commanded.Aggregate.Multi
+  alias Money.Currency
 
   defguard is_time_in_force(tif) when
     not is_nil(tif) and (
@@ -21,12 +22,6 @@ defmodule Exchange.Orderbook do
       tif == :immediate_or_cancel or
       tif == :fill_or_kill
     )
-
-  defguard is_price(price) when
-    is_integer(price) and price > 0
-
-  defguard is_quantity(qty) when
-    is_integer(qty) and qty > 0
 
   @derive Jason.Encoder
   defstruct [
@@ -50,8 +45,12 @@ defmodule Exchange.Orderbook do
       quantity: qty,
       price: price
     }
-  ) when is_time_in_force(tif) and is_quantity(qty) and is_price(price) do
-    :ok
+  ) when is_time_in_force(tif) do
+    cond do
+      not Money.positive?(qty) -> {:error, :invalid_quantity}
+      not Money.positive?(price) -> {:error, :invalid_price}
+      true -> :ok
+    end
   end
 
   defp validate_place_order_command(
@@ -59,8 +58,12 @@ defmodule Exchange.Orderbook do
       type: :market,
       quantity: qty
     }
-  ) when is_quantity(qty) do
-    :ok
+  ) do
+    if Money.negative?(qty) do
+      {:error, :invalid_quantity}
+    else
+      :ok
+    end
   end
 
   defp validate_place_order_command(
@@ -69,8 +72,12 @@ defmodule Exchange.Orderbook do
       quantity: qty,
       stop_price: stop_price
     }
-  ) when is_quantity(qty) and is_price(stop_price) do
-    :ok
+  ) do
+    cond do
+      not Money.positive?(qty) -> {:error, :invalid_quantity}
+      not Money.positive?(stop_price) -> {:error, :invalid_stop_price}
+      true -> :ok
+    end
   end
 
   defp validate_place_order_command(
@@ -81,8 +88,13 @@ defmodule Exchange.Orderbook do
       price: price,
       stop_price: stop_price
     }
-  ) when is_time_in_force(tif) and is_price(price) and is_quantity(qty) and is_price(stop_price) do
-    :ok
+  ) when is_time_in_force(tif) do
+    cond do
+      not Money.positive?(qty) -> {:error, :invalid_quantity}
+      not Money.positive?(price) -> {:error, :invalid_price}
+      not Money.positive?(stop_price) -> {:error, :invalid_stop_price}
+      true -> :ok
+    end
   end
 
   defp validate_place_order_command(
@@ -93,8 +105,13 @@ defmodule Exchange.Orderbook do
       price: price,
       stop_price: stop_price
     }
-  ) when is_time_in_force(tif) and is_price(price) and is_quantity(qty) and is_price(stop_price) do
-    :ok
+  ) when is_time_in_force(tif) do
+    cond do
+      not Money.positive?(qty) -> {:error, :invalid_quantity}
+      not Money.positive?(price) -> {:error, :invalid_price}
+      not Money.positive?(stop_price) -> {:error, :invalid_stop_price}
+      true -> :ok
+    end
   end
 
   defp validate_place_order_command(
@@ -103,8 +120,12 @@ defmodule Exchange.Orderbook do
       quantity: qty,
       stop_price: stop_price
     }
-  ) when is_quantity(qty) and is_price(stop_price) do
-    :ok
+  ) do
+    cond do
+      not Money.positive?(qty) -> {:error, :invalid_quantity}
+      not Money.positive?(stop_price) -> {:error, :invalid_stop_price}
+      true -> :ok
+    end
   end
 
   defp validate_place_order_command(_command) do
@@ -114,10 +135,11 @@ defmodule Exchange.Orderbook do
   def execute(
     %__MODULE__{symbol: nil},
     %OpenOrderbook{symbol: symbol, base_asset: ba, quote_asset: qa}) do
-    if String.valid?(symbol) do
-      %OrderbookOpened{symbol: symbol, base_asset: ba, quote_asset: qa}
-    else
-      {:error, :invalid_symbol}
+    cond do
+      not String.valid?(symbol) -> {:error, :invalid_symbol}
+      not Currency.exists?(ba) -> {:error, :base_asset_unknown}
+      not Currency.exists?(qa) -> {:error, :quote_asset_unknown}
+        true -> %OrderbookOpened{symbol: symbol, base_asset: Currency.to_atom(ba), quote_asset: Currency.to_atom(qa)}
     end
   end
 
@@ -159,13 +181,13 @@ defmodule Exchange.Orderbook do
   defp orders_descending(ob) do
     Map.values(ob.orders)
     |> Enum.reject(& is_nil(&1.stop_price))
-    |> Enum.sort_by(& &1.stop_price, :desc)
+    |> Enum.sort_by(& &1.stop_price, {:desc, Money})
   end
 
   defp orders_ascending(ob) do
     Map.values(ob.orders)
     |> Enum.reject(& is_nil(&1.stop_price))
-    |> Enum.sort_by(& &1.stop_price, :asc)
+    |> Enum.sort_by(& &1.stop_price, {:asc, Money})
   end
 
   defp place_order(ob, command) do
@@ -193,28 +215,28 @@ defmodule Exchange.Orderbook do
       |> Enum.reduce_while({[], taker_order.quantity}, fn maker_order, {events, quantity} ->
         trade = Trade.execute(maker_order, taker_order, ob.base_asset, ob.quote_asset)
 
-        remaining_quantity = quantity - trade.quantity
+        remaining_quantity = Money.subtract(quantity, trade.quantity)
 
         result =
-          if trade.quantity == maker_order.quantity do
+          if Money.equals?(trade.quantity, maker_order.quantity) do
             fill = Order.fill(maker_order)
             {[fill | [trade | events]], remaining_quantity}
           else
             {[trade | events], remaining_quantity}
           end
 
-        if remaining_quantity < 0 do
-          raise "Negative quantity remaining while processing order"
+        if Money.negative?(remaining_quantity) do
+          raise "Negative quantity remaining while processing order #{taker_order.order_id}"
         end
 
-        if remaining_quantity == 0 do
+        if Money.zero?(remaining_quantity) do
           {:halt, result}
         else
           {:cont, result}
         end
       end)
 
-    if remaining_quantity > 0 do
+    if Money.positive?(remaining_quantity) do
       if taker_order.type == :market do
         Enum.reverse([Order.expire(taker_order) | trades])
       else
@@ -265,10 +287,10 @@ defmodule Exchange.Orderbook do
     |> Map.update!(:orders, fn orders ->
       orders
       |> Map.update!(trade.sell_order_id, fn order ->
-        %{order | quantity: order.quantity - trade.quantity}
+        %{order | quantity: Money.subtract(order.quantity, trade.quantity)}
       end)
       |> Map.update!(trade.buy_order_id, fn order ->
-        %{order | quantity: order.quantity - trade.quantity}
+        %{order | quantity: Money.subtract(order.quantity, trade.quantity)}
       end)
     end)
     |> Map.put(:last_trade_price, trade.price)

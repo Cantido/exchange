@@ -1,15 +1,22 @@
 defmodule Exchange.Balance do
+  alias Money.Currency
+
   @enforce_keys [
-    :asset
+    :asset,
+    :free
   ]
   defstruct [
     asset: nil,
-    free: 0,
+    free: nil,
     locks: %{}
   ]
 
   def new(asset) do
-    %__MODULE__{asset: asset}
+    currency = Currency.to_atom(asset)
+    %__MODULE__{
+      asset: currency,
+      free: Money.new(0, currency)
+    }
   end
 
   @doc """
@@ -20,10 +27,10 @@ defmodule Exchange.Balance do
       iex> Balance.new("BTC")
       ...> |> Balance.add(1)
       ...> |> Balance.free()
-      1
+      %Money{amount: 1, currency: :BTC}
   """
-  def add(%__MODULE__{free: free} = balance, amount) do
-    %__MODULE__{balance | free: free + amount}
+  def add(%__MODULE__{asset: asset, free: free} = balance, amount) do
+    %__MODULE__{balance | free: Money.add(free, amount)}
   end
 
   @doc """
@@ -35,13 +42,13 @@ defmodule Exchange.Balance do
       ...> |> Balance.add(5)
       ...> |> Balance.subtract(2)
       ...> |> Balance.free()
-      3
+      %Money{amount: 3, currency: :BTC}
   """
   def subtract(%__MODULE__{free: free} = balance, amount) do
     unless sufficient_balance?(balance, amount) do
       raise "Cannot subtract #{amount} from a balance of #{free}"
     end
-    %__MODULE__{balance | free: free - amount}
+    %__MODULE__{balance | free: Money.subtract(free, amount)}
   end
 
   def free(%__MODULE__{free: free}) do
@@ -61,7 +68,7 @@ defmodule Exchange.Balance do
       false
   """
   def sufficient_balance?(%__MODULE__{free: free}, amount) do
-    free - amount >= 0
+    not Money.negative?(Money.subtract(free, amount))
   end
 
   def locked_by?(%__MODULE__{locks: locks}, order_id) do
@@ -89,7 +96,7 @@ defmodule Exchange.Balance do
     end
 
     %__MODULE__{balance |
-      free: free - amount,
+      free: Money.subtract(free, amount),
       locks: Map.put(locks, order_id, amount)
     }
   end
